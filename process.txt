@@ -1,0 +1,12 @@
+Done
+	Model
+	Create Dynamic Angular Component
+	Dynamic add angular component to view
+Target
+	Combine Gentools and angular
+		Design Component
+			Template Region
+			Template Input
+		UI generate Strategy
+			
+Problems

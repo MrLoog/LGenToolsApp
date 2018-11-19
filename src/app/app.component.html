@@ -1,0 +1,15 @@
+
+<div style="width:100%;">
+    <div id="input-region" class="global-region">
+         <input type="button" value="Load File" (click)="onSelectBtnClick()"/>
+         </div>
+     </div>
+     <div *ngIf="templateFactory">
+         <select  (change)="onSelect($event.target.value)">
+             <option *ngFor="let templateName of templateFactory.templateKeys" (click)="onSelectTemplate(templateName)">{{templateName}}</option>
+         </select>
+     </div>
+     <app-template-output-area></app-template-output-area>
+     <ng-template #dynamic></ng-template>
+ <div>
+<div (click)="onClickTest()">Test</div>

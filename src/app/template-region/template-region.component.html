@@ -1,0 +1,19 @@
+<!-- <div style="border-left: 1px solid black;"> -->
+  <div data-id="tr-{{GTModel.parentModel.level}}-{{GTModel.parentModel.stt}}-{{GTModel.level}}-{{GTModel.stt}}" class="template-region">
+  <!-- <p>Template Region {{GTModel.name}} {{GTModel.constructor.name}}</p> -->
+  <ng-container *ngIf="GTModel.buildable; then someContent"></ng-container>
+  <ng-template #someContent ><input type="button" value="Build {{GTModel.name}}" (click)="buildResult()"/></ng-template>
+
+  <ng-container *ngIf="GTModel.commandCtrl; then btnCommandCtrl"></ng-container>
+  <ng-template #btnCommandCtrl ><input type="button" value="{{GTModel.aliasCommand}}" (click)="commandCtrl()"/></ng-template>
+  
+
+  <ng-container *ngIf="GTModel.isBodyRow; then bodyRow"></ng-container>
+  <ng-template #bodyRow ><input type="button" value="Remove Row" (click)="removeRow()"/></ng-template>
+
+  <!-- <div style="margin-left:12px;"> -->
+    <div >
+    <ng-template #dynamic></ng-template>
+  </div>
+  <ng-template ad-host></ng-template>
+</div>
