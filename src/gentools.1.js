@@ -15,7 +15,6 @@ class XMLTemplate{
 		this.options=options;
 		this.rootFolder=options.rootFolder;
 		this.containerId=options.containerId;
-		this.myWrapperId=TemplateUtils.getUniqueID();
 		this.parent=this.parentModel=options.parent;
 		this.factoryUI=options.factoryUI;
 		this.level=this.parent.level+1;
@@ -25,16 +24,14 @@ class XMLTemplate{
 	}
 	createDataInit(source,wrapperId){
 		if(source===undefined){
-			source={rootFolder:this.rootFolder,containerId:this.containerId,parent:this,factoryUI:this.factoryUI};
+			source={rootFolder:this.rootFolder,parent:this,factoryUI:this.factoryUI};
 		}
-		return {source:source,rootFolder:this.rootFolder,containerId:typeof wrapperId==='undefined'?this.myWrapperId:wrapperId,parent:this,factoryUI:this.factoryUI};
+		return {source:source,rootFolder:this.rootFolder,parent:this,factoryUI:this.factoryUI};
 	}
 	createUI(){
 		if(this['UIControl']===undefined){
 			this['UIControl']=this.factoryUI.buildUIControl(this,this.parentModel);
 		}
-		//this['UIControl'].createUI();
-		//this.getContainer().append('<div class="'+this.getClassCss()+'" id="'+this.myWrapperId+'"></div>');
 	}
 	generateUI(){
 		throw new Error('You have to implement the method doSomething!');
@@ -80,9 +77,6 @@ class XMLTemplate{
 	  }
 
 	  return  fn;
-	}
-	getClassCss(){
-		return 'lgt-template';
 	}
 	setFactoryUI(factoryUI){
 		this.factoryUI=factoryUI;
@@ -167,18 +161,8 @@ class BodyObject extends XMLTemplate{
 		//todo:implement body
 		super(options);
 		var source=this.source;
-		// this.templatePath=TemplateUtils.index(source,TemplateUtils.BODY_VALUE_INDEX_PATH);
-		// this.type=TemplateUtils.index(source,TemplateUtils.BODY_TYPE_INDEX_PATH);
-		// this.repeat=TemplateUtils.index(source,TemplateUtils.BODY_REPEAT_INDEX_PATH);
-		// this.stepRepeat=TemplateUtils.index(source,TemplateUtils.BODY_SREPEAT_INDEX_PATH);
 		this.bodySource=TemplateUtils.index(source,TemplateUtils.BODY_ARRAY_INDEX_PATH);
-		//this.rootFolder=options.rootFolder;
 		this.parent=options.parent;
-		//this.containerId=options.containerId;
-		// this.loadTemplate();
-		//init control property
-		// this.curRepeat=1;
-		this.childWrapperId=TemplateUtils.getUniqueID();//wrapper id for contain global child ui
 		this.initBodyValues();
 	}
 	loadTemplate(){
@@ -201,14 +185,7 @@ class BodyObject extends XMLTemplate{
 	}
 	generateCtrl(){
 		//todo:generate control ui
-		var self=this;
-		if(this.repeat!==undefined){
-			var repeatBtnId=TemplateUtils.getUniqueID();
-			this.getMyWrapper().append('<input type="button" value="Add More Template" id="'+repeatBtnId+'"/>');
-			$('#'+repeatBtnId).click(function(){
-				self.ctrlDoRepeat();
-			});
-		}
+		
 	}
 	createUI(){
 		super.createUI();
@@ -225,7 +202,7 @@ class BodyObject extends XMLTemplate{
 		this.curRepeat++;
 	}
 	getClassCss(){
-		return super.getClassCss()+' '+'lgt-body';
+		
 	}
 	setChilds(childs){
 		this.childs=childs;//contain all childs
@@ -279,7 +256,6 @@ class BodyObject extends XMLTemplate{
 		//todo:return struct body
 	}
 	generateChildUI(){
-		this.getMyWrapper().append('<div class="lgt-childs-content" id="'+this.childWrapperId+'"></div>'); //append wrapper for global child ui
 		for(var i=0;i<this.bodyChilds.length;i++){
 			this.bodyChilds[i].createUI();
 		}
@@ -314,7 +290,6 @@ class BodyValue extends XMLTemplate{
 		this.bodyRow=new BodyRow(this.createDataInit(this.source));
 		this.bodyRow.stt=0;
 		this.bodyRows=[];
-		this.childWrapperId=TemplateUtils.getUniqueID();
 		this.loadTemplate();
 	}
 	loadTemplate(){
@@ -346,7 +321,6 @@ class BodyValue extends XMLTemplate{
 		//todo: body value generate output
 	}
 	generateChildUI(){
-		this.getMyWrapper().append('<div class="lgt-childs-content" id="'+this.childWrapperId+'"></div>'); //append wrapper for child
 		this.bodyRow.createUI();
 		for(var i=0;i<this.childs.length;i++){
 			this.childs[i].createUI();
@@ -440,20 +414,9 @@ class BodyPart extends BodyValue{
 			bodyRow.stt=i+1;
 			var repeat=this.childsRepeat[i]=bodyRow.childs;
 			
-			//this.buildChild(this.childSource,this.childsRepeat[i]);
-			// $('#'+this.childWrapperId).append('<div id="'+divId+'" class="lgt-row-child"></div>');
 			for(var j=0;j< this.childsRepeat[i].length;j++){
 				this.childsRepeat[i][j].createUI();
 			}
-			// var btnRemoveId=TemplateUtils.getUniqueID();
-			// $('#'+divId).append('<input type="button" value="Remove This Row" id="'+btnRemoveId+'"/>');
-			// (function(repeat,btnRemoveId,divId,self){
-			// 	$('#'+btnRemoveId).click(function(){
-			// 		var index=self.childsRepeat.indexOf(repeat);
-			// 		self.childsRepeat.splice(index, 1);
-			// 		$('#'+divId).remove();
-			// 	});
-			// })(repeat,btnRemoveId,divId,self);
 		}
 	}
 	
@@ -463,7 +426,7 @@ class BodyPart extends BodyValue{
 		this.bodyRows.splice(index, 1);
 	}
 	
-	cloneChilds(childDivId){
+	cloneChilds(){
 		var childs=[];
 		var bodyRow=new BodyRow(this.createDataInit(this.source));
 		bodyRow.childs=childs;
@@ -475,7 +438,6 @@ class BodyPart extends BodyValue{
 			childs.push(aChild);
 			aChild.stt=i;
 			bodyRow.addChild(aChild);
-			aChild.containerId=childDivId;
 		}
 		return bodyRow;
 	}
@@ -507,13 +469,6 @@ class RepeatCtrl extends CommandCtrl{
 	}
 	createUI(){
 		super.createUI();
-		var self=this;
-		var $wrapper=self.getMyWrapper();
-			self.btnCtrlId=TemplateUtils.getUniqueID();
-			$wrapper.append('<input type="button" value="Generate Repeat" id="'+self.btnCtrlId+'"/>');
-			$('#'+self.btnCtrlId).click(function(){
-				self.makeRepeat();
-			});
 	}
 	makeRepeat(){
 		if(this.stepRepeat===undefined) this.stepRepeat=1;
@@ -588,7 +543,6 @@ class Template extends XMLTemplate{
 			// this.body=new BodyObject({source:TemplateUtils.index(source,TemplateUtils.BODY_INDEX_PATH),rootFolder:options.rootFolder,parent:this,containerId:this.wrapperId});
 			this.body=new BodyObject(this.createDataInit(TemplateUtils.index(source,TemplateUtils.BODY_INDEX_PATH)));
 			this.body.setFactoryUI(this.factoryUI);
-			console.log(this.body);
 		}
 		this.name=TemplateUtils.index(source,TemplateUtils.NAME_INDEX_PATH);
 		this.description=TemplateUtils.index(source,TemplateUtils.DES_INDEX_PATH);
@@ -614,22 +568,6 @@ class Template extends XMLTemplate{
 		//have child -> mush have body
 		this.body.setChilds(arrChilds);
 	}
-	//demo index function
-	// > obj = {a:{b:{etc:5}}}
-	// > index(obj,'a.b.etc')
-	// 5
-	// > index(obj,['a','b','etc'])   #works with both strings and lists
-	// 5
-	/*index(obj,is, value) {
-		if (typeof is == 'string')
-			return this.index(obj,is.split('.'), value);
-		else if (is.length==1 && value!==undefined)
-			return obj[is[0]] = value;
-		else if (is.length==0)
-			return obj;
-		else
-			return this.index(obj[is[0]],is.slice(1), value);
-	}*/
 	createUI(){
 		super.createUI();//super class auto append wrapper div to parent div
 		if(this.isMultiTemplate()){
@@ -645,13 +583,7 @@ class Template extends XMLTemplate{
 		}
 	}
 	generateBtnBuild(){
-		var self=this;
-		var $myWrapper=this.getMyWrapper();
-		this.btnBuildId=TemplateUtils.getUniqueID();
-		$myWrapper.append('<input type="button" id="'+this.btnBuildId+'"  value="Build Template '+this.name+'" />');
-		$('#'+this.btnBuildId).click(function(){
-			self.showBuildTemplate();
-		});
+		
 	}
 	showBuildTemplate(){
 		//alert(this.generateOutput());
