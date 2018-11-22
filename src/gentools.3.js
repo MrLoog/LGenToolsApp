@@ -20,25 +20,26 @@ class XMLTemplate{
 		this.parent=this.parentModel=options.parent;
 		this.factoryUI=options.factoryUI;
 		this.dataSource=options.dataSource;
-		this.absolutePath=options.absolutePath;
 		this.level=this.parent.level+1;
 	}
 	setUIControl(uiControl){
 		this.UIControl=uiControl;
 	}
-	createDataInit(source,wrapperId,absolutePath){
+	createDataInit(source,wrapperId){
 		if(source===undefined){
-			source={};
+			source={rootFolder:this.rootFolder
+				,containerId:this.containerId
+				,parent:this
+				,factoryUI:this.factoryUI
+				,dataSource:this.dataSource};
 		}
 		return {source:source
 			,rootFolder:this.rootFolder
-			,containerId:(typeof wrapperId==='undefined'?this.myWrapperId:wrapperId)
+			,containerId:typeof wrapperId==='undefined'?this.myWrapperId:wrapperId
 			,parent:this
 			,factoryUI:this.factoryUI
-			,dataSource:this.dataSource
-		,absolutePath:absolutePath===undefined?this.absolutePath:absolutePath};
+			,dataSource=this.dataSource};
 	}
-
 	createUI(){
 		if(this['UIControl']===undefined){
 			this['UIControl']=this.factoryUI.buildUIControl(this,this.parentModel);
@@ -291,7 +292,12 @@ class BodyObject extends XMLTemplate{
 		if(this.type.toUpperCase()=='IN'){
 			self.parent.template=self.template=self.templatePath;
 		}else if (this.type.toUpperCase()=='OUT'){
-			this.dataSource.loadTemplate(self.rootFolder,self.templatePath,function(data){
+			var absolutePath = path.join(self.rootFolder,self.templatePath) 
+			fs.readFile(absolutePath, 'utf-8', (err, data) => {
+				if(err){
+					alert("An error ocurred reading the file :" + err.message);
+					return;
+				}
 				self.parent.template=self.template=data;
 			});
 		}
@@ -393,6 +399,7 @@ class BodyRow extends XMLTemplate{
 	}
 	
 	addChild(aChild){
+		
 		aChild.parentModel=this;
 	}
 
@@ -422,7 +429,13 @@ class BodyValue extends XMLTemplate{
 			// self.parent.template=self.template=self.templatePath;
 			self.template=self.templatePath;
 		}else if (this.type.toUpperCase()=='OUT'){
-			this.dataSource.loadTemplate(self.rootFolder,self.templatePath,function(data){
+			var absolutePath = path.join(self.rootFolder,self.templatePath) 
+			fs.readFile(absolutePath, 'utf-8', (err, data) => {
+				if(err){
+					alert("An error ocurred reading the file :" + err.message);
+					return;
+				}
+				// self.parent.template=self.template=data;
 				self.template=data;
 			});
 		}
@@ -692,7 +705,8 @@ class Template extends XMLTemplate{
 		if(TemplateUtils.index(source,TemplateUtils.BODY_INDEX_PATH)!=undefined){
 			// this.body=new BodyObject({source:TemplateUtils.index(source,TemplateUtils.BODY_INDEX_PATH),rootFolder:options.rootFolder,parent:this,containerId:this.wrapperId});
 			this.body=new BodyObject(this.createDataInit(TemplateUtils.index(source,TemplateUtils.BODY_INDEX_PATH)));
-			//this.body.setFactoryUI(this.factoryUI);
+			this.body.setFactoryUI(this.factoryUI);
+			console.log(this.body);
 		}
 		this.name=TemplateUtils.index(source,TemplateUtils.NAME_INDEX_PATH);
 		this.description=TemplateUtils.index(source,TemplateUtils.DES_INDEX_PATH);
@@ -711,7 +725,7 @@ class Template extends XMLTemplate{
 	buildChild(childSource,arrChilds){
 		for(var i=0;i<childSource.length;i++){
 			var aChild=new ChildWrapper(this.createDataInit(childSource[i]));
-			//aChild.setFactoryUI(this.factoryUI);
+			aChild.setFactoryUI(this.factoryUI);
 			aChild.stt=i;
 			arrChilds.push(aChild);
 		}
@@ -848,7 +862,6 @@ class ChildWrapper extends XMLTemplate{
 		this.value=TemplateUtils.index(source,TemplateUtils.CHILD_VALUE_PATH);
 		this.values=TemplateUtils.index(source,'value');
 		this.forBody=TemplateUtils.index(source,TemplateUtils.FOR_VALUE_PATH);
-		var self=this;
 		if(this.isInputChild()){
 			this.inputType=TemplateUtils.index(source,TemplateUtils.INPUT_TYPE_INDEX_PATH);
 			if(this.inputType.toUpperCase()=="LIST"){
@@ -859,10 +872,6 @@ class ChildWrapper extends XMLTemplate{
 			}
 		}else if(this.type.toUpperCase()=='OUT'){
 			this.loadObjTemplate();
-		}else if(this.type.toUpperCase()=='IN'){
-			this.dataSource.lookingObj(this.absolutePath,this.name,function(object){
-				self.initObjtemplate(object,self.absolutePath);
-			});
 		}
 	}
 	isInputChild(){
@@ -870,19 +879,30 @@ class ChildWrapper extends XMLTemplate{
 	}
 	loadObjTemplate(){
 		var self=this;
-		this.dataSource.loadObjTemplate(this.rootFolder,this.value,self.name,function(object){
-			self.initObjtemplate(object,path.join(self.rootFolder,self.value));
+			var absolutePath = path.join(this.rootFolder,this.value) 
+			fs.readFile(absolutePath, 'utf-8', (err, data) => {
+				if(err){
+					alert("An error ocurred reading the file :" + err.message);
+					return;
+				}
+				parseString(data, function (err, result) {
+					var objects=result.objects.object;
+					for(var i=0;i<objects.length;i++){
+						if(objects[i].$.name==self.name){
+							self.initObjtemplate(objects[i]);
+							break;
+						}
+					}
+				});
+				return ;
 		});
-			
 	}
-	initObjtemplate(source,absolutePath){
-		this.objTemplate=new ObjectTemplate(this.createDataInit(source,null,absolutePath));
+	initObjtemplate(source){
+		this.objTemplate=new ObjectTemplate(this.createDataInit(source));
 	}
 	createUI(){
 		super.createUI();
-		if(this.type.toUpperCase()=='IN'){
-			this.objTemplate.createUI();
-		}else if(this.type.toUpperCase()=='OUT'){
+		if(this.type.toUpperCase()=='OUT'){
 			this.objTemplate.createUI();
 		}else{ 
 			if(this.isInputChild()){
@@ -905,9 +925,7 @@ class ChildWrapper extends XMLTemplate{
 			}
 			return;
 		}else if(this.type.toUpperCase()=='IN'){
-			console.log(this.objTemplate.generateOutput());
-			return this.objTemplate.generateOutput();
-			//return this.value;
+			return this.value;
 		}
 		else{
 			return this.objTemplate.generateOutput();
@@ -1041,55 +1059,6 @@ export function selectFile(arr,factoryUI){
 class DataSource{
 	constructor(options){
 		this.options=options;
-		this.lstObj={};
-	}
-
-	loadTemplate(rootFolder,templatePath,onSuccess){
-		var absolutePath = path.join(rootFolder,templatePath) 
-		fs.readFile(absolutePath, 'utf-8', (err, data) => {
-			if(err){
-				alert("An error ocurred reading the file :" + err.message);
-				return;
-			}
-			if(onSuccess!==undefined) onSuccess(data);
-		});
-	}
-
-	findObjectInList(folder,relativeFileName,objName,onSuccess){
-		var absolutePath = path.join(folder,relativeFileName) 
-		var find=this.lstObj[absolutePath];
-		if(find===undefined) this.loadObjsFromFile(absolutePath,objName,onSuccess);
-		else this.lookingObj(absolutePath,objName,onSuccess);
-	}
-
-	loadObjsFromFile(absolutePath,objName,onSuccess){
-		var self=this;
-		fs.readFile(absolutePath, 'utf-8', (err, data) => {
-			if(err){
-				alert("An error ocurred reading the file :" + err.message);
-				return;
-			}
-			parseString(data, function (err, result) {
-				var objects=result.objects.object;
-				self.lstObj[absolutePath]=objects;
-				self.lookingObj(absolutePath,objName,onSuccess);
-			});
-			return ;
-		});
-	}
-
-	lookingObj(absolutePath,objName,onSuccess){
-		var lstObjs=this.lstObj[absolutePath]
-		for(var i=0;i<lstObjs.length;i++){
-			if(lstObjs[i].$.name==objName){
-				onSuccess(lstObjs[i]);
-				break;
-			}
-		}
-	}
-
-	loadObjTemplate(folder,relativeFileName,objName,onSuccess){
-		this.findObjectInList(folder,relativeFileName,objName,onSuccess);
 	}
 }
 

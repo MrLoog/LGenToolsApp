@@ -15,30 +15,19 @@ class XMLTemplate{
 		var source=this.source=options.source;
 		this.options=options;
 		this.rootFolder=options.rootFolder;
-		this.containerId=options.containerId;
-		this.myWrapperId=TemplateUtils.getUniqueID();
 		this.parent=this.parentModel=options.parent;
 		this.factoryUI=options.factoryUI;
-		this.dataSource=options.dataSource;
-		this.absolutePath=options.absolutePath;
 		this.level=this.parent.level+1;
 	}
 	setUIControl(uiControl){
 		this.UIControl=uiControl;
 	}
-	createDataInit(source,wrapperId,absolutePath){
+	createDataInit(source,wrapperId){
 		if(source===undefined){
-			source={};
+			source={rootFolder:this.rootFolder,parent:this,factoryUI:this.factoryUI};
 		}
-		return {source:source
-			,rootFolder:this.rootFolder
-			,containerId:(typeof wrapperId==='undefined'?this.myWrapperId:wrapperId)
-			,parent:this
-			,factoryUI:this.factoryUI
-			,dataSource:this.dataSource
-		,absolutePath:absolutePath===undefined?this.absolutePath:absolutePath};
+		return {source:source,rootFolder:this.rootFolder,parent:this,factoryUI:this.factoryUI};
 	}
-
 	createUI(){
 		if(this['UIControl']===undefined){
 			this['UIControl']=this.factoryUI.buildUIControl(this,this.parentModel);
@@ -91,9 +80,6 @@ class XMLTemplate{
 
 	  return  fn;
 	}
-	getClassCss(){
-		return 'lgt-template';
-	}
 	setFactoryUI(factoryUI){
 		this.factoryUI=factoryUI;
 	}
@@ -102,101 +88,6 @@ class XMLTemplate{
 			return 'input';
 		}
 		return 'object';
-	}
-}
-
-var myModuleUI={};
-myModuleUI.InputValueUI=class InputValueUIFactory{
-	constructor(options){
-		this.options=options;
-		this.inputType=options.inputType;
-		this.containerId=options.containerId;
-		this.viewId=options.viewId;
-		this.buildUI();
-	}
-	buildUI(){
-		if(this.inputType.toUpperCase()=='TEXT'){
-			this.inputUI=new InputTextUI(this.options);
-		}else if(this.inputType.toUpperCase()=='BOOLEAN'){
-			this.inputUI=new InputBooleanUI(this.options);
-		}else if(this.inputType.toUpperCase()=='LIST'){
-			this.inputUI=new InputListUI(this.options);
-		}
-		else{
-			this.inputUI=new InputUI(this.options);
-		}
-		this.inputUI.buildUI();
-	}
-	getValue(){
-		return this.inputUI.getValue();
-	}
-}
-
-class InputUI extends XMLTemplate{
-	constructor(options){
-		super(options);
-		this.options=options;
-		this.inputType=options.inputType;
-		this.containerId=options.containerId;
-		this.viewId=options.viewId;
-		this.value=options.value[0];
-		this.values=options.value;
-	}
-	buildUI(){
-		//do nothing
-	}
-	getValue(){
-		return this.value;
-	}
-	getContainer(){
-		return $('#'+this.containerId);
-	}
-	buildCommonClass(){
-		return 'lgt-inputUI'
-	}
-}
-
- class InputTextUI extends InputUI{
-	constructor(options){
-		super(options);
-	}
-	buildUI(){
-		var $container=this.getContainer();
-		$container.append('<input type="text" class="'+this.buildCommonClass()+'" id="'+this.viewId+'"  value="'+this.value+'"/>');
-	}
-	getValue(){
-		return $('#'+this.viewId).val();
-	}
-}
-
-class InputBooleanUI extends InputUI{
-	constructor(options){
-		super(options);
-	}
-	buildUI(){
-		var $container=this.getContainer();
-		$container.append('<input type="checkbox" class="'+this.buildCommonClass()+'" id="'+this.viewId+'"  '+(this.value.toUpperCase()=='TRUE'?'checked':'')+'/>');
-	}
-	getValue(){
-		return $('#'+this.viewId).prop('checked');
-	}
-}
-
-class InputListUI extends InputUI{
-	constructor(options){
-		super(options);
-	}
-	buildUI(){
-		var $container=this.getContainer();
-		var html='<select class="'+this.buildCommonClass()+'" id="'+this.viewId+'">'
-		for(var i=0;i<this.values.length;i++){
-			html+='<option value="'+(this.values[i]._===undefined?'':this.values[i]._)+'" '+(i==0?'selected="selected"':'')+'>'+this.values[i].$.alias+'</option>'
-		}
-		html+='</select>'
-		$container.append(html);
-	}
-	getValue(){
-		return $('#'+this.viewId+' option:selected').val();
 	}
 }
 
@@ -283,7 +174,6 @@ class BodyObject extends XMLTemplate{
 		// this.loadTemplate();
 		//init control property
 		// this.curRepeat=1;
-		this.childWrapperId=TemplateUtils.getUniqueID();//wrapper id for contain global child ui
 		this.initBodyValues();
 	}
 	loadTemplate(){
@@ -291,7 +181,12 @@ class BodyObject extends XMLTemplate{
 		if(this.type.toUpperCase()=='IN'){
 			self.parent.template=self.template=self.templatePath;
 		}else if (this.type.toUpperCase()=='OUT'){
-			this.dataSource.loadTemplate(self.rootFolder,self.templatePath,function(data){
+			var absolutePath = path.join(self.rootFolder,self.templatePath) 
+			fs.readFile(absolutePath, 'utf-8', (err, data) => {
+				if(err){
+					alert("An error ocurred reading the file :" + err.message);
+					return;
+				}
 				self.parent.template=self.template=data;
 			});
 		}
@@ -301,14 +196,6 @@ class BodyObject extends XMLTemplate{
 	}
 	generateCtrl(){
 		//todo:generate control ui
-		var self=this;
-		if(this.repeat!==undefined){
-			var repeatBtnId=TemplateUtils.getUniqueID();
-			this.getMyWrapper().append('<input type="button" value="Add More Template" id="'+repeatBtnId+'"/>');
-			$('#'+repeatBtnId).click(function(){
-				self.ctrlDoRepeat();
-			});
-		}
 	}
 	createUI(){
 		super.createUI();
@@ -323,9 +210,6 @@ class BodyObject extends XMLTemplate{
 		// this.parent.makeClone(this.stepRepeat);
 		this.parent.buildRepeat(this.stepRepeat);
 		this.curRepeat++;
-	}
-	getClassCss(){
-		return super.getClassCss()+' '+'lgt-body';
 	}
 	setChilds(childs){
 		this.childs=childs;//contain all childs
@@ -379,7 +263,6 @@ class BodyObject extends XMLTemplate{
 		//todo:return struct body
 	}
 	generateChildUI(){
-		this.getMyWrapper().append('<div class="lgt-childs-content" id="'+this.childWrapperId+'"></div>'); //append wrapper for global child ui
 		for(var i=0;i<this.bodyChilds.length;i++){
 			this.bodyChilds[i].createUI();
 		}
@@ -393,6 +276,7 @@ class BodyRow extends XMLTemplate{
 	}
 	
 	addChild(aChild){
+		
 		aChild.parentModel=this;
 	}
 
@@ -413,7 +297,6 @@ class BodyValue extends XMLTemplate{
 		this.bodyRow=new BodyRow(this.createDataInit(this.source));
 		this.bodyRow.stt=0;
 		this.bodyRows=[];
-		this.childWrapperId=TemplateUtils.getUniqueID();
 		this.loadTemplate();
 	}
 	loadTemplate(){
@@ -422,7 +305,13 @@ class BodyValue extends XMLTemplate{
 			// self.parent.template=self.template=self.templatePath;
 			self.template=self.templatePath;
 		}else if (this.type.toUpperCase()=='OUT'){
-			this.dataSource.loadTemplate(self.rootFolder,self.templatePath,function(data){
+			var absolutePath = path.join(self.rootFolder,self.templatePath) 
+			fs.readFile(absolutePath, 'utf-8', (err, data) => {
+				if(err){
+					alert("An error ocurred reading the file :" + err.message);
+					return;
+				}
+				// self.parent.template=self.template=data;
 				self.template=data;
 			});
 		}
@@ -439,7 +328,6 @@ class BodyValue extends XMLTemplate{
 		//todo: body value generate output
 	}
 	generateChildUI(){
-		this.getMyWrapper().append('<div class="lgt-childs-content" id="'+this.childWrapperId+'"></div>'); //append wrapper for child
 		this.bodyRow.createUI();
 		for(var i=0;i<this.childs.length;i++){
 			this.childs[i].createUI();
@@ -468,18 +356,6 @@ class BodyValue extends XMLTemplate{
 class BodyStruct extends BodyValue{
 	constructor(options){
 		super(options);
-	}
-}
-
-class BodyMulti extends BodyObject{
-
-	constructor(options){
-		super(options);
-		this.initBodyParts();
-	}
-
-	initBodyParts(){
-
 	}
 }
 
@@ -539,8 +415,7 @@ class BodyPart extends BodyValue{
 		var number = number*1;
 		var curRepeat=this.childsRepeat.length;
 		for(var i=curRepeat;i<(curRepeat+number);i++){
-			var divId=TemplateUtils.getUniqueID();
-			var bodyRow=this.cloneChilds(divId)
+			var bodyRow=this.cloneChilds();
 			bodyRow.repeatIndex=i;
 			bodyRow.stt=i+1;
 			var repeat=this.childsRepeat[i]=bodyRow.childs;
@@ -568,7 +443,7 @@ class BodyPart extends BodyValue{
 		this.bodyRows.splice(index, 1);
 	}
 	
-	cloneChilds(childDivId){
+	cloneChilds(){
 		var childs=[];
 		var bodyRow=new BodyRow(this.createDataInit(this.source));
 		bodyRow.childs=childs;
@@ -580,7 +455,6 @@ class BodyPart extends BodyValue{
 			childs.push(aChild);
 			aChild.stt=i;
 			bodyRow.addChild(aChild);
-			aChild.containerId=childDivId;
 		}
 		return bodyRow;
 	}
@@ -612,13 +486,6 @@ class RepeatCtrl extends CommandCtrl{
 	}
 	createUI(){
 		super.createUI();
-		var self=this;
-		var $wrapper=self.getMyWrapper();
-			self.btnCtrlId=TemplateUtils.getUniqueID();
-			$wrapper.append('<input type="button" value="Generate Repeat" id="'+self.btnCtrlId+'"/>');
-			$('#'+self.btnCtrlId).click(function(){
-				self.makeRepeat();
-			});
 	}
 	makeRepeat(){
 		if(this.stepRepeat===undefined) this.stepRepeat=1;
@@ -692,7 +559,7 @@ class Template extends XMLTemplate{
 		if(TemplateUtils.index(source,TemplateUtils.BODY_INDEX_PATH)!=undefined){
 			// this.body=new BodyObject({source:TemplateUtils.index(source,TemplateUtils.BODY_INDEX_PATH),rootFolder:options.rootFolder,parent:this,containerId:this.wrapperId});
 			this.body=new BodyObject(this.createDataInit(TemplateUtils.index(source,TemplateUtils.BODY_INDEX_PATH)));
-			//this.body.setFactoryUI(this.factoryUI);
+			this.body.setFactoryUI(this.factoryUI);
 		}
 		this.name=TemplateUtils.index(source,TemplateUtils.NAME_INDEX_PATH);
 		this.description=TemplateUtils.index(source,TemplateUtils.DES_INDEX_PATH);
@@ -711,7 +578,7 @@ class Template extends XMLTemplate{
 	buildChild(childSource,arrChilds){
 		for(var i=0;i<childSource.length;i++){
 			var aChild=new ChildWrapper(this.createDataInit(childSource[i]));
-			//aChild.setFactoryUI(this.factoryUI);
+			aChild.setFactoryUI(this.factoryUI);
 			aChild.stt=i;
 			arrChilds.push(aChild);
 		}
@@ -750,12 +617,6 @@ class Template extends XMLTemplate{
 	}
 	generateBtnBuild(){
 		var self=this;
-		var $myWrapper=this.getMyWrapper();
-		this.btnBuildId=TemplateUtils.getUniqueID();
-		$myWrapper.append('<input type="button" id="'+this.btnBuildId+'"  value="Build Template '+this.name+'" />');
-		$('#'+this.btnBuildId).click(function(){
-			self.showBuildTemplate();
-		});
 	}
 	showBuildTemplate(){
 		//alert(this.generateOutput());
@@ -786,7 +647,6 @@ class Template extends XMLTemplate{
 	generateChildUI(){
 		//todo:implement generate child of selected template
 		
-		$('#'+this.childWrapperId).append('<div id="'+this.childs.arrChildsDiv+'" class="lgt-row-child"></div>');
 		for(var i=0;i<this.childs.length;i++){
 			this.childs[i].createUI();
 		}
@@ -809,9 +669,6 @@ class Template extends XMLTemplate{
 		this.childs.push(aChild);
 		setTimeout(function(){ aChild.createUI(); }, 3000);
 	}
-	getClassCss(){
-		return super.getClassCss()+' '+'lgt-xml';
-	}
 }
 
 
@@ -829,12 +686,6 @@ class RootTemplate extends Template{
 	}
 	createUI(){
 		super.createUI();
-		var self=this;
-		var btnRemoveId=TemplateUtils.getUniqueID();
-		this.getMyWrapper().prepend('<input type="button" value="Remove Template '+this.name+'" id="'+btnRemoveId+'"/>');
-		$('#'+btnRemoveId).click(function(){
-			self.getMyWrapper().remove();
-		});
 	}
 }
 
@@ -848,7 +699,6 @@ class ChildWrapper extends XMLTemplate{
 		this.value=TemplateUtils.index(source,TemplateUtils.CHILD_VALUE_PATH);
 		this.values=TemplateUtils.index(source,'value');
 		this.forBody=TemplateUtils.index(source,TemplateUtils.FOR_VALUE_PATH);
-		var self=this;
 		if(this.isInputChild()){
 			this.inputType=TemplateUtils.index(source,TemplateUtils.INPUT_TYPE_INDEX_PATH);
 			if(this.inputType.toUpperCase()=="LIST"){
@@ -859,10 +709,6 @@ class ChildWrapper extends XMLTemplate{
 			}
 		}else if(this.type.toUpperCase()=='OUT'){
 			this.loadObjTemplate();
-		}else if(this.type.toUpperCase()=='IN'){
-			this.dataSource.lookingObj(this.absolutePath,this.name,function(object){
-				self.initObjtemplate(object,self.absolutePath);
-			});
 		}
 	}
 	isInputChild(){
@@ -870,19 +716,30 @@ class ChildWrapper extends XMLTemplate{
 	}
 	loadObjTemplate(){
 		var self=this;
-		this.dataSource.loadObjTemplate(this.rootFolder,this.value,self.name,function(object){
-			self.initObjtemplate(object,path.join(self.rootFolder,self.value));
+			var absolutePath = path.join(this.rootFolder,this.value) 
+			fs.readFile(absolutePath, 'utf-8', (err, data) => {
+				if(err){
+					alert("An error ocurred reading the file :" + err.message);
+					return;
+				}
+				parseString(data, function (err, result) {
+					var objects=result.objects.object;
+					for(var i=0;i<objects.length;i++){
+						if(objects[i].$.name==self.name){
+							self.initObjtemplate(objects[i]);
+							break;
+						}
+					}
+				});
+				return ;
 		});
-			
 	}
-	initObjtemplate(source,absolutePath){
-		this.objTemplate=new ObjectTemplate(this.createDataInit(source,null,absolutePath));
+	initObjtemplate(source){
+		this.objTemplate=new ObjectTemplate(this.createDataInit(source));
 	}
 	createUI(){
 		super.createUI();
-		if(this.type.toUpperCase()=='IN'){
-			this.objTemplate.createUI();
-		}else if(this.type.toUpperCase()=='OUT'){
+		if(this.type.toUpperCase()=='OUT'){
 			this.objTemplate.createUI();
 		}else{ 
 			if(this.isInputChild()){
@@ -891,9 +748,6 @@ class ChildWrapper extends XMLTemplate{
 		}
 	}
 	generateInput(){
-		var $container=this.getContainer();
-		this.inputViewId=TemplateUtils.getUniqueID();
-		this.inputValueUI=new myModuleUI.InputValueUI({inputType:this.inputType,containerId:this.myWrapperId,viewId:this.inputViewId,value:this.values,parent:this});
 		// if(this.inputType.toUpperCase()=='TEXT'){
 			// $container.append('<input type="text" id="'+this.inputViewId+'"  value="'+this.value+'">');
 		// }
@@ -905,9 +759,7 @@ class ChildWrapper extends XMLTemplate{
 			}
 			return;
 		}else if(this.type.toUpperCase()=='IN'){
-			console.log(this.objTemplate.generateOutput());
-			return this.objTemplate.generateOutput();
-			//return this.value;
+			return this.value;
 		}
 		else{
 			return this.objTemplate.generateOutput();
@@ -925,13 +777,6 @@ class ChildWrapper extends XMLTemplate{
 	makeClone(){
 		this.parent.addChild(this.cloneNew());
 	}
-	getClassCss(){
-		var css='lgt-child-wrapper';
-		if(this.isInputChild()){
-			css+=' '+'lgt-wrapper-input'
-		}
-		return super.getClassCss()+' '+css;
-	}
 }
 
 const classesMapping = {
@@ -942,10 +787,8 @@ const classesMapping = {
 export class TemplateFactory{
 	constructor(options){
 		this.source=options.source;
-		this.containerId=options.containerId;
 		this.rootFile=options.rootFile;
 		this.factoryUI=options.factoryUI;
-		this.dataSource=options.dataSource;
 		this['UIControl']=this.factoryUI;
 		this.level=0;
 		this.initRootTemplate();
@@ -955,12 +798,7 @@ export class TemplateFactory{
 		this.templateMap={};
 		this.templateKeys=[];
 		for(var i=0;i<templateXmlList.length;i++){
-			var template=new RootTemplate({source:templateXmlList[i]
-				,rootFolder:this.getRootFolder()
-				,containerId:this.containerId
-				,parent:this
-				,factoryUI:this.factoryUI
-				,dataSource:this.dataSource});
+			var template=new RootTemplate({source:templateXmlList[i],rootFolder:this.getRootFolder(),containerId:this.containerId,parent:this,factoryUI:this.factoryUI});
 			this.templateMap[template.name]=template;
 			this.templateKeys.push(template.name);
 		}
@@ -1026,71 +864,13 @@ export function selectFile(arr,factoryUI){
         // Change how to handle the file content
         console.log("The file content is : " + data);
 		parseString(data.toString(), function (err, result) {
-			var factory=new TemplateFactory({rootFile:fileNames[0],source:result
-				,containerId:'slt-entity-container'
-				,factoryUI:factoryUI
-				,dataSource:new DataSource({rootFile:fileNames[0]})});
+			var factory=new TemplateFactory({rootFile:fileNames[0],source:result,containerId:'slt-entity-container',factoryUI:factoryUI});
 			factory.test='Success';
 			//factory.createUI();
 			 arr.push(factory);
 		});
     });
 });
-}
-
-class DataSource{
-	constructor(options){
-		this.options=options;
-		this.lstObj={};
-	}
-
-	loadTemplate(rootFolder,templatePath,onSuccess){
-		var absolutePath = path.join(rootFolder,templatePath) 
-		fs.readFile(absolutePath, 'utf-8', (err, data) => {
-			if(err){
-				alert("An error ocurred reading the file :" + err.message);
-				return;
-			}
-			if(onSuccess!==undefined) onSuccess(data);
-		});
-	}
-
-	findObjectInList(folder,relativeFileName,objName,onSuccess){
-		var absolutePath = path.join(folder,relativeFileName) 
-		var find=this.lstObj[absolutePath];
-		if(find===undefined) this.loadObjsFromFile(absolutePath,objName,onSuccess);
-		else this.lookingObj(absolutePath,objName,onSuccess);
-	}
-
-	loadObjsFromFile(absolutePath,objName,onSuccess){
-		var self=this;
-		fs.readFile(absolutePath, 'utf-8', (err, data) => {
-			if(err){
-				alert("An error ocurred reading the file :" + err.message);
-				return;
-			}
-			parseString(data, function (err, result) {
-				var objects=result.objects.object;
-				self.lstObj[absolutePath]=objects;
-				self.lookingObj(absolutePath,objName,onSuccess);
-			});
-			return ;
-		});
-	}
-
-	lookingObj(absolutePath,objName,onSuccess){
-		var lstObjs=this.lstObj[absolutePath]
-		for(var i=0;i<lstObjs.length;i++){
-			if(lstObjs[i].$.name==objName){
-				onSuccess(lstObjs[i]);
-				break;
-			}
-		}
-	}
-
-	loadObjTemplate(folder,relativeFileName,objName,onSuccess){
-		this.findObjectInList(folder,relativeFileName,objName,onSuccess);
-	}
 }
 
 export function gentoolstest(){
