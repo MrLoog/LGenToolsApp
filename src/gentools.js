@@ -16,7 +16,6 @@ class XMLTemplate{
 		this.options=options;
 		this.rootFolder=options.rootFolder;
 		this.containerId=options.containerId;
-		this.myWrapperId=TemplateUtils.getUniqueID();
 		this.parent=this.parentModel=options.parent;
 		this.factoryUI=options.factoryUI;
 		this.dataSource=options.dataSource;
@@ -349,6 +348,10 @@ class BodyObject extends XMLTemplate{
 			if(source.$.type.toUpperCase()=='STRUCT'){
 				this.bodyStruct=new BodyStruct(this.createDataInit(source));
 				this.bodyStruct.stt=i;
+			} else if(source.$.type.toUpperCase()=='MULTI'){
+				var bodyMulti=new BodyMulti(this.createDataInit(source));
+				this.bodyValues[bodyMulti.name]=bodyMulti;
+				bodyMulti.stt=i;
 			}else{
 				var bodyPart=new BodyPart(this.createDataInit(source));
 				this.bodyValues[bodyPart.name]=bodyPart;
@@ -402,14 +405,67 @@ class BodyRow extends XMLTemplate{
 	}
 }
 
-class BodyValue extends XMLTemplate{
+class BodyRowMulti extends XMLTemplate{
+	constructor(options){
+		super(options);
+		this.childs=[];
+		this.bodyRowMulti=true;
+	}
+
+	
+	addChild(aChild){
+		aChild.parentModel=this;
+		this.childs.push(aChild);
+		if(this.childs.length==1){
+			this.setSelectedChildByName(this.childs[0].name);
+		}
+	}
+
+	destroy(){
+		this.parent.removeBodyRow(this);
+		delete this;
+	}
+
+
+	setSelectedChildByName(name){
+		for(var i=0;i<this.parent.childs.length;i++){
+			if(this.parent.childs[i].name==name){
+				this.selectedName=name;
+				this.selectedChild=this.childs[i];
+			}
+		}
+	}
+
+	createUI(){
+		super.createUI();
+		console.log('multi body row',this);
+	}
+
+	reloadUI(){
+		this.selectedChild.createUI();
+	}
+}
+
+class BodyValueBase extends XMLTemplate{
+	constructor(options){
+		super(options);
+		this.childs=[];
+	}
+
+	addChild(aChild){
+		//aChild.containerId=this.childWrapperId;
+		this.childs.push(aChild);
+	}
+
+}
+
+class BodyValue extends BodyValueBase{
 	constructor(options){
 		super(options);
 		var source=options.source;
 		this.key=TemplateUtils.index(source,'$.key');
 		this.templatePath=TemplateUtils.index(source,'_');
 		this.type=TemplateUtils.index(source,'$.type');
-		this.childs=[];
 		this.bodyRow=new BodyRow(this.createDataInit(this.source));
 		this.bodyRow.stt=0;
 		this.bodyRows=[];
@@ -432,8 +488,8 @@ class BodyValue extends XMLTemplate{
 	}
 	addChild(aChild){
 		//aChild.containerId=this.childWrapperId;
+		super.addChild(aChild);
 		this.bodyRow.addChild(aChild);
-		this.childs.push(aChild);
 	}
 	generateOutput(){
 		//todo: body value generate output
@@ -471,15 +527,45 @@ class BodyStruct extends BodyValue{
 	}
 }
 
-class BodyMulti extends BodyObject{
+class BodyMulti extends BodyValueBase{
 
 	constructor(options){
 		super(options);
-		this.initBodyParts();
+		this.name=TemplateUtils.index(options.source,'$.name');
+		this.bodyRow=new BodyRowMulti(this.createDataInit(this.source));
+		this.bodyRow.stt=0;
+		this.bodyRows=[];
 	}
 
-	initBodyParts(){
+	addChild(aChild){
+		//aChild.containerId=this.childWrapperId;
+		super.addChild(aChild);
+		this.bodyRow.addChild(aChild);
+	}
 
+	removeBodyRow(bodyRow){
+		var index=bodyRow.repeatIndex*1;
+		this.childsRepeat.splice(index, 1);
+		this.bodyRows.splice(index, 1);
+	}
+	
+
+	generateOutput(){
+		var output='';
+		output+=this.bodyRow.selectedChild.generateOutput();
+		this.templateO=TemplateUtils.replaceTemplate(this.templateO,data);
+		//for(var i=0;i<this.ctrlObjs.length;i++){
+		//	this.ctrlObjs[i].generateOutput();
+		//}
+		return output;
+	}
+
+	createUI(){
+		super.createUI();
+		this.bodyRow.createUI();
+		//for(var i=0;i<this.childs.length;i++){
+		//	this.childs[i].createUI();
+		//}
 	}
 }
 

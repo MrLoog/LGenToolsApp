@@ -11,6 +11,14 @@
   <ng-container *ngIf="GTModel.isBodyRow; then bodyRow"></ng-container>
   <ng-template #bodyRow ><input type="button" value="Remove Row" (click)="removeRow()"/></ng-template>
 
+  <ng-container *ngIf="GTModel.bodyRowMulti; then bodyRowMulti"></ng-container>
+  <ng-template #bodyRowMulti >
+      <select [(ngModel)]="GTModel.selectedName" (change)="changeMultiBody()">
+          <option *ngFor="let value of GTModel.childs; let i=index "  [ngValue]="value.name">{{value.name}}</option>
+        </select>
+    <input type="button" value="Remove Row Multi" (click)="removeRow()"/>
+  </ng-template>
+
   <!-- <div style="margin-left:12px;"> -->
     <div >
     <ng-template #dynamic></ng-template>

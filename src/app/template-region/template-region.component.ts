@@ -55,4 +55,9 @@ export class TemplateRegionComponent implements OnInit {
     // .parentElement
     // .removeChild(this.viewContainerRef.element.nativeElement);
   }
+
+  changeMultiBody():void{
+    this.GTModel.setSelectedChildByName(this.GTModel.selectedName);
+    this.GTModel.reloadUI();
+  }
 }
