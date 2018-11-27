@@ -340,6 +340,7 @@ class BodyRowMulti extends XMLTemplate{
 
 	createUI(){
 		super.createUI();
+		this.reloadUI();
 	}
 
 	reloadUI(){
@@ -440,19 +441,25 @@ class BodyMulti extends BodyValueBase{
 		this.bodyRows=[];
 		this.bodyRows.push(this.bodyRow);
 		this.template=TemplateUtils.index(options.source,'_');
+		this.initCtrl();
+	}
+
+	initCtrl(){
+		this.ctrlObjs=[];
+		if(TemplateUtils.index(this.source,'$.repeat')!==undefined){
+			var repeatCtrl=new RepeatCtrl(this.createDataInit(this.source));
+			this.ctrlObjs.push(repeatCtrl);
+		}
+		// if(TemplateUtils.index(this.source,'$.shadowFrom')!==undefined){
+		// 	var shadowCtrl=new ShadowCtrl(this.createDataInit(this.source));
+		// 	this.ctrlObjs.push(shadowCtrl);
+		// }
 	}
 
 	addChild(aChild){
 		super.addChild(aChild);
 		this.bodyRow.addChild(aChild);
 	}
-
-	removeBodyRow(bodyRow){
-		var index=bodyRow.repeatIndex*1;
-		this.childsRepeat.splice(index, 1);
-		this.bodyRows.splice(index, 1);
-	}
-	
 
 	generateOutput(){
 		var output='';
@@ -462,15 +469,49 @@ class BodyMulti extends BodyValueBase{
 		//for(var i=0;i<this.ctrlObjs.length;i++){
 		//	this.ctrlObjs[i].generateOutput();
 		//}
+		for(var i=0;i<this.ctrlObjs.length;i++){
+			output+=this.ctrlObjs[i].generateOutputMulti();
+		}
 		return output;
 	}
 
 	createUI(){
 		super.createUI();
 		this.bodyRow.createUI();
+		this.generateCtrl();
 		//for(var i=0;i<this.childs.length;i++){
 		//	this.childs[i].createUI();
 		//}
+	}
+
+	generateCtrl(){
+		for(var i=0;i<this.ctrlObjs.length;i++){
+			this.ctrlObjs[i].createUI();
+		}
+	}
+
+	removeBodyRow(bodyRow){
+		var index=bodyRow.repeatIndex*1;
+		this.childsRepeat.splice(index, 1);
+		this.bodyRows.splice(index, 1);
+	}
+	
+
+	cloneChilds(){
+		var bodyRow=new BodyRowMulti(this.createDataInit(this.source));
+		this.bodyRows.push(bodyRow);
+		for(var i=0;i<this.childs.length;i++){
+			var aChild=new ChildWrapper(this.createDataInit(this.childs[i].source));
+			aChild.setFactoryUI(this.factoryUI);
+			aChild.stt=i;
+			bodyRow.addChild(aChild);
+		}
+		return bodyRow;
+	}
+
+	generateChildRepeatUI(i){
+		this.bodyRows[i+1].createUI();
+		//do nothing
 	}
 }
 
@@ -522,23 +563,7 @@ class BodyPart extends BodyValue{
 	// }
 	
 	
-	buildRepeat(number){
-		if(this.childsRepeat===undefined){
-			this.childsRepeat=[];
-		}
-		var number = number*1;
-		var curRepeat=this.childsRepeat.length;
-		for(var i=curRepeat;i<(curRepeat+number);i++){
-			var bodyRow=this.cloneChilds()
-			bodyRow.repeatIndex=i;
-			bodyRow.stt=i+2;
-			var repeat=this.childsRepeat[i]=bodyRow.childs;
-			
-			for(var j=0;j< this.childsRepeat[i].length;j++){
-				this.childsRepeat[i][j].createUI();
-			}
-		}
-	}
+	
 	
 	removeBodyRow(bodyRow){
 		var index=bodyRow.repeatIndex*1;
@@ -551,7 +576,6 @@ class BodyPart extends BodyValue{
 		var bodyRow=new BodyRow(this.createDataInit(this.source));
 		bodyRow.childs=childs;
 		this.bodyRows.push(bodyRow);
-		bodyRow.createUI();
 		for(var i=0;i<this.childs.length;i++){
 			var aChild=new ChildWrapper(this.createDataInit(this.childs[i].source));
 			aChild.setFactoryUI(this.factoryUI);
@@ -560,6 +584,13 @@ class BodyPart extends BodyValue{
 			bodyRow.addChild(aChild);
 		}
 		return bodyRow;
+	}
+
+	generateChildRepeatUI(i){
+		this.bodyRows[i+1].createUI();
+		for(var j=0;j< this.childsRepeat[i].length;j++){
+			this.childsRepeat[i][j].createUI();
+		}
 	}
 }
 
@@ -593,8 +624,23 @@ class RepeatCtrl extends CommandCtrl{
 	makeRepeat(){
 		if(this.stepRepeat===undefined) this.stepRepeat=1;
 		// this.parent.makeClone(this.stepRepeat);
-		this.parent.buildRepeat(this.stepRepeat);
 		this.curRepeat++;
+
+		var number=this.stepRepeat;
+		var parent=this.parent;
+		if(parent.childsRepeat===undefined){
+			parent.childsRepeat=[];
+		}
+		var number = number*1;
+		var curRepeat=parent.childsRepeat.length;
+		for(var i=curRepeat;i<(curRepeat+number);i++){
+			var bodyRow=parent.cloneChilds()
+			bodyRow.repeatIndex=i;
+			bodyRow.stt=i+2;
+			var repeat=parent.childsRepeat[i]=bodyRow.childs;
+			
+			this.parent.generateChildRepeatUI(i);
+		}
 	}
 	
 	generateOutput(){
@@ -612,6 +658,19 @@ class RepeatCtrl extends CommandCtrl{
 			curOutput+=parent.templateO;
 		}
 		parent.templateO=curOutput;
+	}
+	
+	generateOutputMulti(){
+		var output='';
+		var data={};
+		for(var i=1;i<this.parent.bodyRows.length;i++){
+			data[this.parent.bodyRows[i].selectedChild.key]=this.parent.bodyRows[i].selectedChild.generateOutput();
+			output+=TemplateUtils.replaceTemplate(this.parent.template,data);
+		}
+		//for(var i=0;i<this.ctrlObjs.length;i++){
+		//	this.ctrlObjs[i].generateOutput();
+		//}
+		return output;
 	}
 }
 

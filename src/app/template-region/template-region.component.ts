@@ -37,7 +37,6 @@ export class TemplateRegionComponent implements OnInit {
   }
 
   commandCtrl(){
-    console.log('command ctrl');
     this.GTModel.makeRepeat();
   }
   removeMe: Function;
