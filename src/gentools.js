@@ -96,108 +96,8 @@ class XMLTemplate{
 	setFactoryUI(factoryUI){
 		this.factoryUI=factoryUI;
 	}
-	getTypeTemplate(){
-		if(this instanceof inputUI){
-			return 'input';
-		}
-		return 'object';
-	}
 }
 
-var myModuleUI={};
-myModuleUI.InputValueUI=class InputValueUIFactory{
-	constructor(options){
-		this.options=options;
-		this.inputType=options.inputType;
-		this.containerId=options.containerId;
-		this.viewId=options.viewId;
-		this.buildUI();
-	}
-	buildUI(){
-		if(this.inputType.toUpperCase()=='TEXT'){
-			this.inputUI=new InputTextUI(this.options);
-		}else if(this.inputType.toUpperCase()=='BOOLEAN'){
-			this.inputUI=new InputBooleanUI(this.options);
-		}else if(this.inputType.toUpperCase()=='LIST'){
-			this.inputUI=new InputListUI(this.options);
-		}
-		else{
-			this.inputUI=new InputUI(this.options);
-		}
-		this.inputUI.buildUI();
-	}
-	getValue(){
-		return this.inputUI.getValue();
-	}
-}
-
-class InputUI extends XMLTemplate{
-	constructor(options){
-		super(options);
-		this.options=options;
-		this.inputType=options.inputType;
-		this.containerId=options.containerId;
-		this.viewId=options.viewId;
-		this.value=options.value[0];
-		this.values=options.value;
-	}
-	buildUI(){
-		//do nothing
-	}
-	getValue(){
-		return this.value;
-	}
-	getContainer(){
-		return $('#'+this.containerId);
-	}
-	buildCommonClass(){
-		return 'lgt-inputUI'
-	}
-}
-
- class InputTextUI extends InputUI{
-	constructor(options){
-		super(options);
-	}
-	buildUI(){
-		var $container=this.getContainer();
-		$container.append('<input type="text" class="'+this.buildCommonClass()+'" id="'+this.viewId+'"  value="'+this.value+'"/>');
-	}
-	getValue(){
-		return $('#'+this.viewId).val();
-	}
-}
-
-class InputBooleanUI extends InputUI{
-	constructor(options){
-		super(options);
-	}
-	buildUI(){
-		var $container=this.getContainer();
-		$container.append('<input type="checkbox" class="'+this.buildCommonClass()+'" id="'+this.viewId+'"  '+(this.value.toUpperCase()=='TRUE'?'checked':'')+'/>');
-	}
-	getValue(){
-		return $('#'+this.viewId).prop('checked');
-	}
-}
-
-class InputListUI extends InputUI{
-	constructor(options){
-		super(options);
-	}
-	buildUI(){
-		var $container=this.getContainer();
-		var html='<select class="'+this.buildCommonClass()+'" id="'+this.viewId+'">'
-		for(var i=0;i<this.values.length;i++){
-			html+='<option value="'+(this.values[i]._===undefined?'':this.values[i]._)+'" '+(i==0?'selected="selected"':'')+'>'+this.values[i].$.alias+'</option>'
-		}
-		html+='</select>'
-		$container.append(html);
-	}
-	getValue(){
-		return $('#'+this.viewId+' option:selected').val();
-	}
-}
 
 var TemplateUtils={
 	parseBody:function(){
@@ -282,7 +182,6 @@ class BodyObject extends XMLTemplate{
 		// this.loadTemplate();
 		//init control property
 		// this.curRepeat=1;
-		this.childWrapperId=TemplateUtils.getUniqueID();//wrapper id for contain global child ui
 		this.initBodyValues();
 	}
 	loadTemplate(){
@@ -300,14 +199,6 @@ class BodyObject extends XMLTemplate{
 	}
 	generateCtrl(){
 		//todo:generate control ui
-		var self=this;
-		if(this.repeat!==undefined){
-			var repeatBtnId=TemplateUtils.getUniqueID();
-			this.getMyWrapper().append('<input type="button" value="Add More Template" id="'+repeatBtnId+'"/>');
-			$('#'+repeatBtnId).click(function(){
-				self.ctrlDoRepeat();
-			});
-		}
 	}
 	createUI(){
 		super.createUI();
@@ -334,7 +225,6 @@ class BodyObject extends XMLTemplate{
 			if(aChild.forBody!==undefined){
 				this.bodyValues[aChild.forBody].addChild(aChild);
 			}else{
-				//aChild.containerId=this.childWrapperId;
 				aChild.parentModel=this;
 				this.bodyChilds.push(aChild);
 			}
@@ -382,7 +272,6 @@ class BodyObject extends XMLTemplate{
 		//todo:return struct body
 	}
 	generateChildUI(){
-		this.getMyWrapper().append('<div class="lgt-childs-content" id="'+this.childWrapperId+'"></div>'); //append wrapper for global child ui
 		for(var i=0;i<this.bodyChilds.length;i++){
 			this.bodyChilds[i].createUI();
 		}
@@ -453,7 +342,6 @@ class BodyValueBase extends XMLTemplate{
 	}
 
 	addChild(aChild){
-		//aChild.containerId=this.childWrapperId;
 		this.childs.push(aChild);
 	}
 
@@ -469,7 +357,7 @@ class BodyValue extends BodyValueBase{
 		this.bodyRow=new BodyRow(this.createDataInit(this.source));
 		this.bodyRow.stt=0;
 		this.bodyRows=[];
-		this.childWrapperId=TemplateUtils.getUniqueID();
+		this.bodyRows.push(this.bodyRow);
 		this.loadTemplate();
 	}
 	loadTemplate(){
@@ -487,7 +375,6 @@ class BodyValue extends BodyValueBase{
 		super.createUI();
 	}
 	addChild(aChild){
-		//aChild.containerId=this.childWrapperId;
 		super.addChild(aChild);
 		this.bodyRow.addChild(aChild);
 	}
@@ -495,7 +382,6 @@ class BodyValue extends BodyValueBase{
 		//todo: body value generate output
 	}
 	generateChildUI(){
-		this.getMyWrapper().append('<div class="lgt-childs-content" id="'+this.childWrapperId+'"></div>'); //append wrapper for child
 		this.bodyRow.createUI();
 		for(var i=0;i<this.childs.length;i++){
 			this.childs[i].createUI();
@@ -535,10 +421,10 @@ class BodyMulti extends BodyValueBase{
 		this.bodyRow=new BodyRowMulti(this.createDataInit(this.source));
 		this.bodyRow.stt=0;
 		this.bodyRows=[];
+		this.bodyRows.push(this.bodyRow);
 	}
 
 	addChild(aChild){
-		//aChild.containerId=this.childWrapperId;
 		super.addChild(aChild);
 		this.bodyRow.addChild(aChild);
 	}
@@ -621,30 +507,17 @@ class BodyPart extends BodyValue{
 		if(this.childsRepeat===undefined){
 			this.childsRepeat=[];
 		}
-		var self=this;
 		var number = number*1;
 		var curRepeat=this.childsRepeat.length;
 		for(var i=curRepeat;i<(curRepeat+number);i++){
-			var divId=TemplateUtils.getUniqueID();
-			var bodyRow=this.cloneChilds(divId)
+			var bodyRow=this.cloneChilds()
 			bodyRow.repeatIndex=i;
-			bodyRow.stt=i+1;
+			bodyRow.stt=i+2;
 			var repeat=this.childsRepeat[i]=bodyRow.childs;
 			
-			//this.buildChild(this.childSource,this.childsRepeat[i]);
-			// $('#'+this.childWrapperId).append('<div id="'+divId+'" class="lgt-row-child"></div>');
 			for(var j=0;j< this.childsRepeat[i].length;j++){
 				this.childsRepeat[i][j].createUI();
 			}
-			// var btnRemoveId=TemplateUtils.getUniqueID();
-			// $('#'+divId).append('<input type="button" value="Remove This Row" id="'+btnRemoveId+'"/>');
-			// (function(repeat,btnRemoveId,divId,self){
-			// 	$('#'+btnRemoveId).click(function(){
-			// 		var index=self.childsRepeat.indexOf(repeat);
-			// 		self.childsRepeat.splice(index, 1);
-			// 		$('#'+divId).remove();
-			// 	});
-			// })(repeat,btnRemoveId,divId,self);
 		}
 	}
 	
@@ -654,7 +527,7 @@ class BodyPart extends BodyValue{
 		this.bodyRows.splice(index, 1);
 	}
 	
-	cloneChilds(childDivId){
+	cloneChilds(){
 		var childs=[];
 		var bodyRow=new BodyRow(this.createDataInit(this.source));
 		bodyRow.childs=childs;
@@ -666,7 +539,6 @@ class BodyPart extends BodyValue{
 			childs.push(aChild);
 			aChild.stt=i;
 			bodyRow.addChild(aChild);
-			aChild.containerId=childDivId;
 		}
 		return bodyRow;
 	}
@@ -698,13 +570,6 @@ class RepeatCtrl extends CommandCtrl{
 	}
 	createUI(){
 		super.createUI();
-		var self=this;
-		var $wrapper=self.getMyWrapper();
-			self.btnCtrlId=TemplateUtils.getUniqueID();
-			$wrapper.append('<input type="button" value="Generate Repeat" id="'+self.btnCtrlId+'"/>');
-			$('#'+self.btnCtrlId).click(function(){
-				self.makeRepeat();
-			});
 	}
 	makeRepeat(){
 		if(this.stepRepeat===undefined) this.stepRepeat=1;
@@ -836,12 +701,6 @@ class Template extends XMLTemplate{
 	}
 	generateBtnBuild(){
 		var self=this;
-		var $myWrapper=this.getMyWrapper();
-		this.btnBuildId=TemplateUtils.getUniqueID();
-		$myWrapper.append('<input type="button" id="'+this.btnBuildId+'"  value="Build Template '+this.name+'" />');
-		$('#'+this.btnBuildId).click(function(){
-			self.showBuildTemplate();
-		});
 	}
 	showBuildTemplate(){
 		//alert(this.generateOutput());
@@ -872,7 +731,6 @@ class Template extends XMLTemplate{
 	generateChildUI(){
 		//todo:implement generate child of selected template
 		
-		$('#'+this.childWrapperId).append('<div id="'+this.childs.arrChildsDiv+'" class="lgt-row-child"></div>');
 		for(var i=0;i<this.childs.length;i++){
 			this.childs[i].createUI();
 		}
@@ -915,12 +773,6 @@ class RootTemplate extends Template{
 	}
 	createUI(){
 		super.createUI();
-		var self=this;
-		var btnRemoveId=TemplateUtils.getUniqueID();
-		this.getMyWrapper().prepend('<input type="button" value="Remove Template '+this.name+'" id="'+btnRemoveId+'"/>');
-		$('#'+btnRemoveId).click(function(){
-			self.getMyWrapper().remove();
-		});
 	}
 }
 
@@ -977,12 +829,6 @@ class ChildWrapper extends XMLTemplate{
 		}
 	}
 	generateInput(){
-		var $container=this.getContainer();
-		this.inputViewId=TemplateUtils.getUniqueID();
-		this.inputValueUI=new myModuleUI.InputValueUI({inputType:this.inputType,containerId:this.myWrapperId,viewId:this.inputViewId,value:this.values,parent:this});
-		// if(this.inputType.toUpperCase()=='TEXT'){
-			// $container.append('<input type="text" id="'+this.inputViewId+'"  value="'+this.value+'">');
-		// }
 	}
 	generateOutput(){
 		if(this.isInputChild()){
@@ -1072,14 +918,6 @@ export class TemplateFactory{
 		// }
 	}
 	createUI(){
-		var self=this;
-		var $container=$('#'+this.containerId);
-		$container.html(this.buildSelectEntity());
-		this.templateId=TemplateUtils.getUniqueID();
-		$container.append('<div  class="lgt-temp-factory" id="'+this.templateId+'"></div>');
-		$container.find('.template-select').change(function(){
-			self.onTemplateSelectChanged(self.templateMap[$container.find('.template-select option:selected').text()]);
-		});
 	}
 	buildSelectEntity(){
 		var sltHtml='<select class="template-select">';
@@ -1182,4 +1020,3 @@ class DataSource{
 export function gentoolstest(){
 	selectFile();
 }
-exports.default =InputUI;
