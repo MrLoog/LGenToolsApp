@@ -60,6 +60,11 @@ export class DynCompServiceService {
     component.instance['removeMe']=function(){
       parentViewRef.detach(parentViewRef.indexOf(component));
     }
+    model.onDestroyUI=function(){
+      if(component.instance['removeMe']!==undefined){
+        component.instance['removeMe']();
+      }
+    }
     return component;
   }
 }

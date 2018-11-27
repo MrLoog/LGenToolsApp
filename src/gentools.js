@@ -21,6 +21,8 @@ class XMLTemplate{
 		this.dataSource=options.dataSource;
 		this.absolutePath=options.absolutePath;
 		this.level=this.parent.level+1;
+		this.createdUI=false;
+		this.hidden=false;
 	}
 	setUIControl(uiControl){
 		this.UIControl=uiControl;
@@ -41,6 +43,7 @@ class XMLTemplate{
 	createUI(){
 		if(this['UIControl']===undefined){
 			this['UIControl']=this.factoryUI.buildUIControl(this,this.parentModel);
+			this.createdUI=true;
 		}
 		//this['UIControl'].createUI();
 		//this.getContainer().append('<div class="'+this.getClassCss()+'" id="'+this.myWrapperId+'"></div>');
@@ -95,6 +98,12 @@ class XMLTemplate{
 	}
 	setFactoryUI(factoryUI){
 		this.factoryUI=factoryUI;
+	}
+
+	destroyUI(){
+		if(this.onDestroyUI!==undefined){
+			this.onDestroyUI();
+		}
 	}
 }
 
@@ -317,20 +326,27 @@ class BodyRowMulti extends XMLTemplate{
 
 
 	setSelectedChildByName(name){
+		if(this.selectedChild!==undefined) this.selectedChild.hidden=true;
 		for(var i=0;i<this.parent.childs.length;i++){
 			if(this.parent.childs[i].name==name){
 				this.selectedName=name;
 				this.selectedChild=this.childs[i];
+				this.selectedChild.hidden=false;
+				break;
 			}
 		}
 	}
 
+
 	createUI(){
 		super.createUI();
-		console.log('multi body row',this);
 	}
 
 	reloadUI(){
+		if(this.selectedChild.createdUI){
+			this.selectedChild.hidden=false;
+			return;
+		}
 		this.selectedChild.createUI();
 	}
 }
@@ -417,11 +433,13 @@ class BodyMulti extends BodyValueBase{
 
 	constructor(options){
 		super(options);
+		this.key=TemplateUtils.index(options.source,'$.key');
 		this.name=TemplateUtils.index(options.source,'$.name');
 		this.bodyRow=new BodyRowMulti(this.createDataInit(this.source));
 		this.bodyRow.stt=0;
 		this.bodyRows=[];
 		this.bodyRows.push(this.bodyRow);
+		this.template=TemplateUtils.index(options.source,'_');
 	}
 
 	addChild(aChild){
@@ -438,8 +456,9 @@ class BodyMulti extends BodyValueBase{
 
 	generateOutput(){
 		var output='';
-		output+=this.bodyRow.selectedChild.generateOutput();
-		this.templateO=TemplateUtils.replaceTemplate(this.templateO,data);
+		var data={};
+		data[this.bodyRow.selectedChild.key]=this.bodyRow.selectedChild.generateOutput();
+		output+=TemplateUtils.replaceTemplate(this.template,data);
 		//for(var i=0;i<this.ctrlObjs.length;i++){
 		//	this.ctrlObjs[i].generateOutput();
 		//}

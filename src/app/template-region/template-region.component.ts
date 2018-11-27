@@ -43,21 +43,18 @@ export class TemplateRegionComponent implements OnInit {
   removeMe: Function;
 
   removeRow():void{
-    console.log('remove row',this.GTModel.parent);
     
     this.GTModel.destroy();
     this.removeMe();
-    console.log('remove row',this.GTModel.parent);
-    //this.viewContainerRef.clear();
-    // this.viewContainerRef
-    // .element
-    // .nativeElement
-    // .parentElement
-    // .removeChild(this.viewContainerRef.element.nativeElement);
   }
 
   changeMultiBody():void{
     this.GTModel.setSelectedChildByName(this.GTModel.selectedName);
     this.GTModel.reloadUI();
+
+  }
+
+  destroyUI():void{
+    this.removeMe();
   }
 }
