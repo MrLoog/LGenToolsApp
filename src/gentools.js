@@ -10,103 +10,6 @@ var path = app.require('path');
 let fs = app.require('fs');
 var parseString = app.require('xml2js').parseString;
 
-class XMLTemplate{
-	constructor(options){
-		var source=this.source=options.source;
-		this.options=options;
-		this.rootFolder=options.rootFolder;
-		this.containerId=options.containerId;
-		this.parent=this.parentModel=options.parent;
-		this.factoryUI=options.factoryUI;
-		this.dataSource=options.dataSource;
-		this.absolutePath=options.absolutePath;
-		this.level=this.parent.level+1;
-		this.createdUI=false;
-		this.hidden=false;
-	}
-	setUIControl(uiControl){
-		this.UIControl=uiControl;
-	}
-	createDataInit(source,wrapperId,absolutePath){
-		if(source===undefined){
-			source={};
-		}
-		return {source:source
-			,rootFolder:this.rootFolder
-			,containerId:(typeof wrapperId==='undefined'?this.myWrapperId:wrapperId)
-			,parent:this
-			,factoryUI:this.factoryUI
-			,dataSource:this.dataSource
-		,absolutePath:absolutePath===undefined?this.absolutePath:absolutePath};
-	}
-
-	createUI(){
-		if(this['UIControl']===undefined){
-			this['UIControl']=this.factoryUI.buildUIControl(this,this.parentModel);
-			this.createdUI=true;
-		}
-		//this['UIControl'].createUI();
-		//this.getContainer().append('<div class="'+this.getClassCss()+'" id="'+this.myWrapperId+'"></div>');
-	}
-	generateUI(){
-		throw new Error('You have to implement the method doSomething!');
-	}
-	isMultiTemplate(){
-		//todo1:implement check multi template
-		return false;
-	}
-	
-	generateSelectTemplate(){
-		//todo1:build html selected
-		//todo1:add event on template selected
-	}
-	generateInput(){
-		//todo1:implement generate input
-		throw new Error('You have to implement the method doSomething!');
-	}
-	generateOutput(){
-		throw new Error('You have to implement the method doSomething!');
-	}
-	getContainer(){
-		return $('#'+this.containerId);
-	}
-	getMyWrapper(){
-		return $('#'+this.myWrapperId);
-	}
-	cloneNew(){
-		// var myObject = window[this.constructor.name];
-		// var MyClass = this.stringToFunction(this.constructor.name);
-		var myObject = new classesMapping[this.constructor.name](this.options);
-		return myObject;
-	}
-	stringToFunction(str) {
-	  var arr = str.split(".");
-
-	  var fn = (window || this);
-	  for (var i = 0, len = arr.length; i < len; i++) {
-		fn = fn[arr[i]];
-	  }
-
-	  if (typeof fn !== "function") {
-		throw new Error("function not found");
-	  }
-
-	  return  fn;
-	}
-	getClassCss(){
-		return 'lgt-template';
-	}
-	setFactoryUI(factoryUI){
-		this.factoryUI=factoryUI;
-	}
-
-	destroyUI(){
-		if(this.onDestroyUI!==undefined){
-			this.onDestroyUI();
-		}
-	}
-}
-
 
 var TemplateUtils={
 	parseBody:function(){
@@ -148,7 +51,20 @@ var TemplateUtils={
 		var resultText = tempFn(data);
 		resultText=resultText.replace(new RegExp('SYSTEM_KEEP_TO','g'),'@'); //@
 		return resultText;
-	}
+	},
+	stringToFunction(str) {
+		var arr = str.split(".");
+  
+		var fn = (window || this);
+		for (var i = 0, len = arr.length; i < len; i++) {
+		  fn = fn[arr[i]];
+		}
+  
+		if (typeof fn !== "function") {
+		  throw new Error("function not found");
+		}
+		return  fn;
+	  }
 }
 
 
@@ -174,73 +90,81 @@ TemplateUtils.INPUT_TYPE_INDEX_PATH='$.inputType';
 
 TemplateUtils.CHILD_VALUE_PATH='value.0';
 
-
-class BodyObject extends XMLTemplate{
+class XMLTemplate{
 	constructor(options){
-		//todo:implement body
+		var source=this.source=options.source;
+		this.options=options;
+		this.rootFolder=options.rootFolder;
+		this.parent=this.parentModel=options.parent;
+		this.factoryUI=options.factoryUI;
+		this.dataSource=options.dataSource;
+		this.absolutePath=options.absolutePath;
+		this.level=this.parent.level+1;
+		this.createdUI=false;
+		this.hidden=false;
+	}
+	setUIControl(uiControl){
+		this.UIControl=uiControl;
+	}
+	createDataInit(source,wrapperId,absolutePath){
+		if(source===undefined){
+			source={};
+		}
+		return {source:source
+			,rootFolder:this.rootFolder
+			,containerId:(typeof wrapperId==='undefined'?this.myWrapperId:wrapperId)
+			,parent:this
+			,factoryUI:this.factoryUI
+			,dataSource:this.dataSource
+		,absolutePath:absolutePath===undefined?this.absolutePath:absolutePath};
+	}
+
+	createUI(){
+		if(this['UIControl']===undefined){
+			this['UIControl']=this.factoryUI.buildUIControl(this,this.parentModel);
+			this.createdUI=true;
+		}
+	}
+	generateUI(){
+		throw new Error('You have to implement the method doSomething!');
+	}
+	isMultiTemplate(){
+		//not using
+		return false;
+	}
+	
+	generateSelectTemplate(){
+		//not using
+	}
+	generateInput(){
+		throw new Error('You have to implement the method doSomething!');
+	}
+	generateOutput(){
+		throw new Error('You have to implement the method doSomething!');
+	}
+	setFactoryUI(factoryUI){
+		this.factoryUI=factoryUI;
+	}
+	destroyUI(){
+		if(this.onDestroyUI!==undefined){
+			this.onDestroyUI();
+		}
+	}
+}
+
+
+
+
+class BodyWrapper extends XMLTemplate{
+	constructor(options){
 		super(options);
 		var source=this.source;
-		// this.templatePath=TemplateUtils.index(source,TemplateUtils.BODY_VALUE_INDEX_PATH);
-		// this.type=TemplateUtils.index(source,TemplateUtils.BODY_TYPE_INDEX_PATH);
-		// this.repeat=TemplateUtils.index(source,TemplateUtils.BODY_REPEAT_INDEX_PATH);
-		// this.stepRepeat=TemplateUtils.index(source,TemplateUtils.BODY_SREPEAT_INDEX_PATH);
 		this.bodySource=TemplateUtils.index(source,TemplateUtils.BODY_ARRAY_INDEX_PATH);
-		//this.rootFolder=options.rootFolder;
 		this.parent=options.parent;
-		//this.containerId=options.containerId;
-		// this.loadTemplate();
-		//init control property
-		// this.curRepeat=1;
 		this.initBodyValues();
 	}
-	loadTemplate(){
-		var self=this;
-		if(this.type.toUpperCase()=='IN'){
-			self.parent.template=self.template=self.templatePath;
-		}else if (this.type.toUpperCase()=='OUT'){
-			this.dataSource.loadTemplate(self.rootFolder,self.templatePath,function(data){
-				self.parent.template=self.template=data;
-			});
-		}
-	}
-	getTemplate(){
-		return this.template;
-	}
-	generateCtrl(){
-		//todo:generate control ui
-	}
-	createUI(){
-		super.createUI();
-		this.generateChildUI();//todo:generate global child 
-		for(var key in this.bodyValues){
-			this.bodyValues[key].createUI();
-		}
-		// this.generateCtrl();
-	}
-	ctrlDoRepeat(){
-		if(this.stepRepeat===undefined) this.stepRepeat=1;
-		// this.parent.makeClone(this.stepRepeat);
-		this.parent.buildRepeat(this.stepRepeat);
-		this.curRepeat++;
-	}
-	getClassCss(){
-		return super.getClassCss()+' '+'lgt-body';
-	}
-	setChilds(childs){
-		this.childs=childs;//contain all childs
-		this.bodyChilds=[];//contain only body value share childs
-		for(var i=0;i<this.childs.length;i++){
-			var aChild=this.childs[i];
-			if(aChild.forBody!==undefined){
-				this.bodyValues[aChild.forBody].addChild(aChild);
-			}else{
-				aChild.parentModel=this;
-				this.bodyChilds.push(aChild);
-			}
-		}
-	}
+	
 	initBodyValues(){
-		//todo: init body value object
 		this.bodyValues={};
 		for(var i=0;i<this.bodySource.length;i++){
 			var source=this.bodySource[i];
@@ -258,101 +182,65 @@ class BodyObject extends XMLTemplate{
 			}
 		}
 	}
-	generateOutput(){
-		var body='';
-		this.bodyStruct.startBuilding()
-		//build from body part
-		var data={};
-		for(var key in this.bodyValues){
-			// this.bodyStruct.replaceChildIntoTemplate(this.bodyValues[key].key,this.bodyValues[key].generateOutput());
-			data[this.bodyValues[key].key]=this.bodyValues[key].generateOutput();
-		}
-		//build from child input share
-		for(var i=0;i<this.bodyChilds.length;i++){
-			// this.bodyStruct.replaceChildIntoTemplate(this.bodyChilds[i].key,this.bodyChilds[i].generateOutput());
-			data[this.bodyChilds[i].key]=this.bodyChilds[i].generateOutput();
-		}
-		
-		// body=this.bodyStruct.generateOutput();
-		body=TemplateUtils.replaceTemplate(this.bodyStruct.templateO,data);
-		return body;
+	// loadTemplate(){
+	// 	var self=this;
+	// 	if(this.type.toUpperCase()=='IN'){
+	// 		self.parent.template=self.template=self.templatePath;
+	// 	}else if (this.type.toUpperCase()=='OUT'){
+	// 		this.dataSource.loadTemplate(self.rootFolder,self.templatePath,function(data){
+	// 			self.parent.template=self.template=data;
+	// 		});
+	// 	}
+	// }
+	getTemplate(){
+		return this.template;
 	}
-	getStructBody(){
-		//todo:return struct body
+	createUI(){
+		super.createUI();
+		this.generateChildUI();
+		for(var key in this.bodyValues){
+			this.bodyValues[key].createUI();
+		}
 	}
 	generateChildUI(){
 		for(var i=0;i<this.bodyChilds.length;i++){
 			this.bodyChilds[i].createUI();
 		}
 	}
-}
-
-class BodyRow extends XMLTemplate{
-	constructor(options){
-		super(options);
-		this.isBodyRow=true;
-	}
-	
-	addChild(aChild){
-		aChild.parentModel=this;
-	}
-
-	destroy(){
-		this.parent.removeBodyRow(this);
-		delete this;
-	}
-}
-
-class BodyRowMulti extends XMLTemplate{
-	constructor(options){
-		super(options);
-		this.childs=[];
-		this.bodyRowMulti=true;
-	}
-
-	
-	addChild(aChild){
-		aChild.parentModel=this;
-		this.childs.push(aChild);
-		if(this.childs.length==1){
-			this.setSelectedChildByName(this.childs[0].name);
-		}
-	}
-
-	destroy(){
-		this.parent.removeBodyRow(this);
-		delete this;
-	}
-
-
-	setSelectedChildByName(name){
-		if(this.selectedChild!==undefined) this.selectedChild.hidden=true;
-		for(var i=0;i<this.parent.childs.length;i++){
-			if(this.parent.childs[i].name==name){
-				this.selectedName=name;
-				this.selectedChild=this.childs[i];
-				this.selectedChild.hidden=false;
-				break;
+	setChilds(childs){
+		this.childs=childs;//contain all childs
+		this.bodyChilds=[];//contain only body value share childs
+		for(var i=0;i<this.childs.length;i++){
+			var aChild=this.childs[i];
+			if(aChild.forBody!==undefined){
+				this.bodyValues[aChild.forBody].addChild(aChild);
+			}else{
+				aChild.parentModel=this;
+				this.bodyChilds.push(aChild);
 			}
 		}
 	}
-
-
-	createUI(){
-		super.createUI();
-		this.reloadUI();
-	}
-
-	reloadUI(){
-		if(this.selectedChild.createdUI){
-			this.selectedChild.hidden=false;
-			return;
+	generateOutput(){
+		var body='';
+		this.bodyStruct.startBuilding()
+		//build from body part
+		var data={};
+		for(var key in this.bodyValues){
+			data[this.bodyValues[key].key]=this.bodyValues[key].generateOutput();
 		}
-		this.selectedChild.createUI();
+		//build from child input share
+		for(var i=0;i<this.bodyChilds.length;i++){
+			data[this.bodyChilds[i].key]=this.bodyChilds[i].generateOutput();
+		}
+		
+		body=TemplateUtils.replaceTemplate(this.bodyStruct.templateO,data);
+		return body;
 	}
 }
 
-class BodyValueBase extends XMLTemplate{
+
+
+class BodyBase extends XMLTemplate{
 	constructor(options){
 		super(options);
 		this.childs=[];
@@ -364,7 +252,7 @@ class BodyValueBase extends XMLTemplate{
 
 }
 
-class BodyValue extends BodyValueBase{
+class BodyValue extends BodyBase{
 	constructor(options){
 		super(options);
 		var source=options.source;
@@ -430,7 +318,86 @@ class BodyStruct extends BodyValue{
 	}
 }
 
-class BodyMulti extends BodyValueBase{
+class BodyPart extends BodyValue{
+	constructor(options){
+		super(options);
+		this.name=TemplateUtils.index(options.source,'$.name');
+		this.initCtrl();
+	}
+	initCtrl(){
+		this.ctrlObjs=[];
+		if(TemplateUtils.index(this.source,'$.repeat')!==undefined){
+			var repeatCtrl=new RepeatCtrl(this.createDataInit(this.source));
+			this.ctrlObjs.push(repeatCtrl);
+		}
+		if(TemplateUtils.index(this.source,'$.shadowFrom')!==undefined){
+			var shadowCtrl=new ShadowCtrl(this.createDataInit(this.source));
+			this.ctrlObjs.push(shadowCtrl);
+		}
+	}
+	
+	generateOutput(clear){
+		this.startBuilding();
+		var data={};
+		for(var i=0;i<this.childs.length;i++){
+			// this.replaceChildIntoTemplate(this.childs[i].key,this.childs[i].generateOutput());
+			data[this.childs[i].key]=this.childs[i].generateOutput();
+		}
+		this.templateO=TemplateUtils.replaceTemplate(this.templateO,data);
+		for(var i=0;i<this.ctrlObjs.length;i++){
+			this.ctrlObjs[i].generateOutput();
+		}
+		return super.generateOutput();
+	}
+	
+	createUI(){
+		super.createUI();
+		this.generateCtrl();
+		this.generateChildUI();
+	}
+	generateCtrl(){
+		for(var i=0;i<this.ctrlObjs.length;i++){
+			this.ctrlObjs[i].createUI();
+		}
+	}
+	// createDataInit(){
+		// var data=super.createDataInit();
+		// return data;
+	// }
+	
+	
+	
+	
+	removeBodyRow(bodyRow){
+		var index=bodyRow.repeatIndex*1;
+		this.childsRepeat.splice(index, 1);
+		this.bodyRows.splice(index, 1);
+	}
+	
+	cloneChilds(){
+		var childs=[];
+		var bodyRow=new BodyRow(this.createDataInit(this.source));
+		bodyRow.childs=childs;
+		this.bodyRows.push(bodyRow);
+		for(var i=0;i<this.childs.length;i++){
+			var aChild=new ChildWrapper(this.createDataInit(this.childs[i].source));
+			aChild.setFactoryUI(this.factoryUI);
+			childs.push(aChild);
+			aChild.stt=i;
+			bodyRow.addChild(aChild);
+		}
+		return bodyRow;
+	}
+
+	generateChildRepeatUI(i){
+		this.bodyRows[i+1].createUI();
+		for(var j=0;j< this.childsRepeat[i].length;j++){
+			this.childsRepeat[i][j].createUI();
+		}
+	}
+}
+
+class BodyMulti extends BodyBase{
 
 	constructor(options){
 		super(options);
@@ -515,82 +482,76 @@ class BodyMulti extends BodyValueBase{
 	}
 }
 
-class BodyPart extends BodyValue{
+
+
+class RowWrapper extends XMLTemplate{
 	constructor(options){
 		super(options);
-		this.name=TemplateUtils.index(options.source,'$.name');
-		this.initCtrl();
 	}
-	initCtrl(){
-		this.ctrlObjs=[];
-		if(TemplateUtils.index(this.source,'$.repeat')!==undefined){
-			var repeatCtrl=new RepeatCtrl(this.createDataInit(this.source));
-			this.ctrlObjs.push(repeatCtrl);
-		}
-		if(TemplateUtils.index(this.source,'$.shadowFrom')!==undefined){
-			var shadowCtrl=new ShadowCtrl(this.createDataInit(this.source));
-			this.ctrlObjs.push(shadowCtrl);
-		}
+}
+
+class BodyRow extends RowWrapper{
+	constructor(options){
+		super(options);
+		this.isBodyRow=true;
 	}
 	
-	generateOutput(clear){
-		this.startBuilding();
-		var data={};
-		for(var i=0;i<this.childs.length;i++){
-			// this.replaceChildIntoTemplate(this.childs[i].key,this.childs[i].generateOutput());
-			data[this.childs[i].key]=this.childs[i].generateOutput();
-		}
-		this.templateO=TemplateUtils.replaceTemplate(this.templateO,data);
-		for(var i=0;i<this.ctrlObjs.length;i++){
-			this.ctrlObjs[i].generateOutput();
-		}
-		return super.generateOutput();
-	}
-	
-	createUI(){
-		super.createUI();
-		this.generateCtrl();
-		this.generateChildUI();
-	}
-	generateCtrl(){
-		for(var i=0;i<this.ctrlObjs.length;i++){
-			this.ctrlObjs[i].createUI();
-		}
-	}
-	// createDataInit(){
-		// var data=super.createDataInit();
-		// return data;
-	// }
-	
-	
-	
-	
-	removeBodyRow(bodyRow){
-		var index=bodyRow.repeatIndex*1;
-		this.childsRepeat.splice(index, 1);
-		this.bodyRows.splice(index, 1);
-	}
-	
-	cloneChilds(){
-		var childs=[];
-		var bodyRow=new BodyRow(this.createDataInit(this.source));
-		bodyRow.childs=childs;
-		this.bodyRows.push(bodyRow);
-		for(var i=0;i<this.childs.length;i++){
-			var aChild=new ChildWrapper(this.createDataInit(this.childs[i].source));
-			aChild.setFactoryUI(this.factoryUI);
-			childs.push(aChild);
-			aChild.stt=i;
-			bodyRow.addChild(aChild);
-		}
-		return bodyRow;
+	addChild(aChild){
+		aChild.parentModel=this;
 	}
 
-	generateChildRepeatUI(i){
-		this.bodyRows[i+1].createUI();
-		for(var j=0;j< this.childsRepeat[i].length;j++){
-			this.childsRepeat[i][j].createUI();
+	destroy(){
+		this.parent.removeBodyRow(this);
+		delete this;
+	}
+}
+
+class BodyRowMulti extends RowWrapper{
+	constructor(options){
+		super(options);
+		this.childs=[];
+		this.bodyRowMulti=true;
+	}
+
+	
+	addChild(aChild){
+		aChild.parentModel=this;
+		this.childs.push(aChild);
+		if(this.childs.length==1){
+			this.setSelectedChildByName(this.childs[0].name);
 		}
+	}
+
+	destroy(){
+		this.parent.removeBodyRow(this);
+		delete this;
+	}
+
+
+	setSelectedChildByName(name){
+		if(this.selectedChild!==undefined) this.selectedChild.hidden=true;
+		for(var i=0;i<this.parent.childs.length;i++){
+			if(this.parent.childs[i].name==name){
+				this.selectedName=name;
+				this.selectedChild=this.childs[i];
+				this.selectedChild.hidden=false;
+				break;
+			}
+		}
+	}
+
+
+	createUI(){
+		super.createUI();
+		this.reloadUI();
+	}
+
+	reloadUI(){
+		if(this.selectedChild.createdUI){
+			this.selectedChild.hidden=false;
+			return;
+		}
+		this.selectedChild.createUI();
 	}
 }
 
@@ -609,6 +570,7 @@ class CommandCtrl extends CtrlView{
 	}
 }
 
+
 class RepeatCtrl extends CommandCtrl{
 	constructor(options){
 		super(options);
@@ -623,7 +585,6 @@ class RepeatCtrl extends CommandCtrl{
 	}
 	makeRepeat(){
 		if(this.stepRepeat===undefined) this.stepRepeat=1;
-		// this.parent.makeClone(this.stepRepeat);
 		this.curRepeat++;
 
 		var number=this.stepRepeat;
@@ -651,7 +612,6 @@ class RepeatCtrl extends CommandCtrl{
 				this.parent.startBuilding();
 				var data={};
 				for(var i=0;i<parent.childsRepeat[j].length;i++){
-					// parent.replaceChildIntoTemplate(parent.childsRepeat[j][i].key,parent.childsRepeat[j][i].generateOutput());
 					data[parent.childsRepeat[j][i].key]=parent.childsRepeat[j][i].generateOutput();
 				}
 				parent.templateO=TemplateUtils.replaceTemplate(parent.templateO,data);
@@ -674,7 +634,14 @@ class RepeatCtrl extends CommandCtrl{
 	}
 }
 
-class ShadowCtrl extends CtrlView{
+class AutoCtrl extends CtrlView{
+	constructor(options){
+		super(options);
+	}
+}
+
+
+class ShadowCtrl extends AutoCtrl{
 	constructor(options){
 		super(options);
 		var source=this.source;
@@ -691,7 +658,6 @@ class ShadowCtrl extends CtrlView{
 		var data={};
 		for(var i=0;i<targetShadow.childs.length;i++){
 			var aChild=targetShadow.childs[i];
-			// parent.replaceChildIntoTemplate(aChild.key,aChild.generateOutput());
 			data[aChild.key]=aChild.generateOutput();
 		}
 		parent.templateO=TemplateUtils.replaceTemplate(parent.templateO,data);
@@ -703,7 +669,6 @@ class ShadowCtrl extends CtrlView{
 		for(var j=0;j<targetShadow.childsRepeat.length;j++){
 			parent.startBuilding();
 			for(var i=0;i<targetShadow.childsRepeat[j].length;i++){
-				// parent.replaceChildIntoTemplate(targetShadow.childsRepeat[j][i].key,targetShadow.childsRepeat[j][i].generateOutput());
 				data[targetShadow.childsRepeat[j][i].key]=targetShadow.childsRepeat[j][i].generateOutput();
 			}
 			parent.templateO=TemplateUtils.replaceTemplate(parent.templateO,data);
@@ -717,11 +682,10 @@ class ShadowCtrl extends CtrlView{
 class Template extends XMLTemplate{
 	constructor(options){
 		super(options);
+		this.buildable=true;
 		var source=this.source=options.source;
 		if(TemplateUtils.index(source,TemplateUtils.BODY_INDEX_PATH)!=undefined){
-			// this.body=new BodyObject({source:TemplateUtils.index(source,TemplateUtils.BODY_INDEX_PATH),rootFolder:options.rootFolder,parent:this,containerId:this.wrapperId});
-			this.body=new BodyObject(this.createDataInit(TemplateUtils.index(source,TemplateUtils.BODY_INDEX_PATH)));
-			//this.body.setFactoryUI(this.factoryUI);
+			this.body=new BodyWrapper(this.createDataInit(TemplateUtils.index(source,TemplateUtils.BODY_INDEX_PATH)));
 		}
 		this.name=TemplateUtils.index(source,TemplateUtils.NAME_INDEX_PATH);
 		this.description=TemplateUtils.index(source,TemplateUtils.DES_INDEX_PATH);
@@ -747,22 +711,6 @@ class Template extends XMLTemplate{
 		//have child -> mush have body
 		this.body.setChilds(arrChilds);
 	}
-	//demo index function
-	// > obj = {a:{b:{etc:5}}}
-	// > index(obj,'a.b.etc')
-	// 5
-	// > index(obj,['a','b','etc'])   #works with both strings and lists
-	// 5
-	/*index(obj,is, value) {
-		if (typeof is == 'string')
-			return this.index(obj,is.split('.'), value);
-		else if (is.length==1 && value!==undefined)
-			return obj[is[0]] = value;
-		else if (is.length==0)
-			return obj;
-		else
-			return this.index(obj[is[0]],is.slice(1), value);
-	}*/
 	createUI(){
 		super.createUI();//super class auto append wrapper div to parent div
 		if(this.isMultiTemplate()){
@@ -781,7 +729,6 @@ class Template extends XMLTemplate{
 		var self=this;
 	}
 	showBuildTemplate(){
-		//alert(this.generateOutput());
 		TemplateUtils.showResult(this.generateOutput());
 	}
 	generateOutput(){
@@ -796,19 +743,12 @@ class Template extends XMLTemplate{
 		return this.templateO;
 	}
 	replaceChildIntoTemplate(template,key,value){
-		//implement replace child into template
-		// var specialC='[\\^$.|?*+()';
-		// for(var i=0;i<specialC.length;i++){
-			// key=key.replace(new RegExp('\\'+specialC[i],'g'),'\\'+specialC[i]);
-			
-		// }
 		var tempO=template.replace(new RegExp(key,'g'),value);
 		//save template to current building template
 		this.templateO=tempO;
 	}
 	generateChildUI(){
 		//todo:implement generate child of selected template
-		
 		for(var i=0;i<this.childs.length;i++){
 			this.childs[i].createUI();
 		}
@@ -822,17 +762,9 @@ class Template extends XMLTemplate{
 	extractSelectedTemplate(selected){
 		//todo:imeplement method
 	}
-	makeClone(number){
-		for(var i=0;i<number;i++){
-			this.parent.makeClone();
-		}
-	}
 	addChild(aChild){
 		this.childs.push(aChild);
 		setTimeout(function(){ aChild.createUI(); }, 3000);
-	}
-	getClassCss(){
-		return super.getClassCss()+' '+'lgt-xml';
 	}
 }
 
@@ -840,14 +772,12 @@ class Template extends XMLTemplate{
 class ObjectTemplate extends Template{
 	constructor(options){
 		super(options);
-		this.buildable=true;
 	}
 }
 
 class RootTemplate extends Template{
 	constructor(options){
 		super(options);
-		this.buildable=true;
 	}
 	createUI(){
 		super.createUI();
@@ -931,16 +861,6 @@ class ChildWrapper extends XMLTemplate{
 	validInput(){
 		//todo1:implement valid Input value
 		return true;
-	}
-	makeClone(){
-		this.parent.addChild(this.cloneNew());
-	}
-	getClassCss(){
-		var css='lgt-child-wrapper';
-		if(this.isInputChild()){
-			css+=' '+'lgt-wrapper-input'
-		}
-		return super.getClassCss()+' '+css;
 	}
 }
 
@@ -1026,7 +946,7 @@ export function selectFile(arr,factoryUI){
         }
 
         // Change how to handle the file content
-        console.log("The file content is : " + data);
+        //console.log("The file content is : " + data);
 		parseString(data.toString(), function (err, result) {
 			var factory=new TemplateFactory({rootFile:fileNames[0],source:result
 				,containerId:'slt-entity-container'
