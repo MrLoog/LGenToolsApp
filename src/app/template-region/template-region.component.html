@@ -3,7 +3,7 @@
   <!-- <p>Template Region {{GTModel.name}} {{GTModel.constructor.name}}</p> -->
     <ng-container *ngIf="GTModel.buildable; then someContent"></ng-container>
     <ng-template #someContent ><input type="button" value="Build {{GTModel.name}}" (click)="buildResult()"/></ng-template>
-
+    
     <ng-container *ngIf="GTModel.commandCtrl; then btnCommandCtrl"></ng-container>
     <ng-template #btnCommandCtrl ><input type="button" value="{{GTModel.aliasCommand}}" (click)="commandCtrl()"/></ng-template>
     
@@ -13,11 +13,14 @@
 
     <ng-container *ngIf="GTModel.bodyRowMulti; then bodyRowMulti"></ng-container>
     <ng-template #bodyRowMulti >
-        <select [(ngModel)]="GTModel.selectedName" (change)="changeMultiBody()">
-            <option *ngFor="let value of GTModel.childs; let i=index "  [ngValue]="value.name">{{value.name}}</option>
-          </select>
+      <select [(ngModel)]="GTModel.selectedName" (change)="changeMultiBody()">
+        <option *ngFor="let value of GTModel.childs; let i=index "  [ngValue]="value.name">{{value.name}}</option>
+      </select>
       <input *ngIf="GTModel.stt!=0" type="button" value="Remove Row Multi" (click)="removeRow()"/>
     </ng-template>
+
+    <ng-container *ngIf="GTModel.rootTemplate; then rootTemplate"></ng-container>
+    <ng-template #someContent ><input type="button" value="Build {{GTModel.name}}" (click)="buildResult()"/></ng-template>
 
   <!-- <div style="margin-left:12px;"> -->
     <div >

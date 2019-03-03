@@ -6,7 +6,8 @@
      </div>
      <div *ngIf="templateFactory">
          <select  (change)="onSelect($event.target.value)">
-             <option *ngFor="let templateName of templateFactory.templateKeys" (click)="onSelectTemplate(templateName)">{{templateName}}</option>
+            <option value="" >None</option>
+            <option *ngFor="let templateName of templateFactory.templateKeys" >{{templateName}}</option>
          </select>
      </div>
      <app-template-output-area></app-template-output-area>

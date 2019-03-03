@@ -369,9 +369,14 @@ class BodyPart extends BodyValue{
 	
 	
 	removeBodyRow(bodyRow){
+		console.log('remove normal repeat');
 		var index=bodyRow.repeatIndex*1;
-		this.childsRepeat.splice(index, 1);
-		this.bodyRows.splice(index, 1);
+		this.childsRepeat.splice(index, 1);// not contain first child
+		this.bodyRows.splice(index+1, 1);
+		//reset index
+		for(var i=index+1;i<this.bodyRows.length;i++){
+			this.bodyRows[i].repeatIndex=i-1;
+		}
 	}
 	
 	cloneChilds(){
@@ -458,9 +463,14 @@ class BodyMulti extends BodyBase{
 	}
 
 	removeBodyRow(bodyRow){
+		console.log('remove body multi');
 		var index=bodyRow.repeatIndex*1;
-		this.childsRepeat.splice(index, 1);
-		this.bodyRows.splice(index, 1);
+		this.childsRepeat.splice(index, 1);// not contain first child
+		this.bodyRows.splice(index+1, 1);
+		//reset index
+		for(var i=index+1;i<this.bodyRows.length;i++){
+			this.bodyRows[i].repeatIndex=i-1;
+		}
 	}
 	
 
@@ -532,6 +542,7 @@ class BodyRowMulti extends RowWrapper{
 		if(this.selectedChild!==undefined) this.selectedChild.hidden=true;
 		for(var i=0;i<this.parent.childs.length;i++){
 			if(this.parent.childs[i].name==name){
+				console.log('set selected name ',name);
 				this.selectedName=name;
 				this.selectedChild=this.childs[i];
 				this.selectedChild.hidden=false;
@@ -778,6 +789,8 @@ class ObjectTemplate extends Template{
 class RootTemplate extends Template{
 	constructor(options){
 		super(options);
+		this.rootTemplate=true;
+		window.rootTemplate=this;
 	}
 	createUI(){
 		super.createUI();

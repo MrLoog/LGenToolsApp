@@ -16,6 +16,9 @@ import { AreaResultService } from '../area-result.service';
 
 export class TemplateRegionComponent implements OnInit {
   GTModel:any;
+  items = [{name: 'one', age: 30 },{ name: 'two', age: 27 },{ name: 'three', age: 50 }];
+  selectedName='';
+  testArr=['1','2','3'];
 
   txtTest2='test2';
   @ViewChild(AdDirective) adHost: AdDirective;
@@ -47,7 +50,8 @@ export class TemplateRegionComponent implements OnInit {
     this.removeMe();
   }
 
-  changeMultiBody():void{
+  changeMultiBody(obj:any):void{
+    console.log(obj);
     this.GTModel.setSelectedChildByName(this.GTModel.selectedName);
     this.GTModel.reloadUI();
 

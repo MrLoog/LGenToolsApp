@@ -56,10 +56,13 @@ export class AppComponent implements OnInit {
   }
 
   onSelectTemplate(templateName):void{
-    this.templateFactory.templateMap[templateName].createUI();
+    // console.log('click call');
+    // if(templateName=='') return;
+    // this.templateFactory.templateMap[templateName].createUI();
   }
 
   onSelect(templateName):void{
+    if(templateName=='') return;
     this.templateFactory.templateMap[templateName].createUI();
   }
 
