@@ -41,10 +41,13 @@ var TemplateUtils={
 		template=template.replace(new RegExp('\n','g'),'{{=it.SYSTEM_NEWLINE}}');
 		template=template.replace(new RegExp(' ','g'),'{{=it.SYSTEM_SPACE}}');
 		template=template.replace(new RegExp('\t','g'),'{{=it.SYSTEM_TAB}}');
+		//template=template.replace(new RegExp("\\\\'",'g'),'{{=it.SYSTEM_COMMA}}');
+		template=template.replace(new RegExp("\\\\'(?![^{]*})",'g'),'{{=it.SYSTEM_COMMA}}');
 		template=template.replace(new RegExp('@','g'),'SYSTEM_KEEP_TO'); //@
 		data.SYSTEM_NEWLINE='\n';
 		data.SYSTEM_SPACE=' ';
 		data.SYSTEM_TAB='\t';
+		data.SYSTEM_COMMA='\'';
 		// 1. Compile template function
 		var tempFn = apiDot.template(template);
 		// 2. Use template function as many times as you like
@@ -218,6 +221,7 @@ class BodyWrapper extends XMLTemplate{
 				aChild.parentModel=this;
 				this.bodyChilds.push(aChild);
 			}
+			
 		}
 	}
 	generateOutput(){
@@ -235,6 +239,21 @@ class BodyWrapper extends XMLTemplate{
 		
 		body=TemplateUtils.replaceTemplate(this.bodyStruct.templateO,data);
 		return body;
+	}
+
+	generateOutputExt(it,key){
+		if (it.Ext===undefined) it.Ext={};
+		//build from body part
+		var data={};
+		for(var k in this.bodyValues){
+			data[this.bodyValues[k].key]=this.bodyValues[k].generateOutput();
+		}
+		//build from child input share
+		for(var i=0;i<this.bodyChilds.length;i++){
+			data[this.bodyChilds[i].key]=this.bodyChilds[i].generateOutput();
+		}
+
+		it.Ext[key]=data;
 	}
 }
 
@@ -333,19 +352,33 @@ class BodyPart extends BodyValue{
 		if(TemplateUtils.index(this.source,'$.shadowFrom')!==undefined){
 			var shadowCtrl=new ShadowCtrl(this.createDataInit(this.source));
 			this.ctrlObjs.push(shadowCtrl);
+			this.isShadow=true;
 		}
 	}
 	
 	generateOutput(clear){
 		this.startBuilding();
 		var data={};
+		console.log('tesst');
+		for(var key in this.parent.bodyChilds){
+			var global_child=this.parent.bodyChilds[key];
+			data[global_child.key]=global_child.generateOutput();
+			global_child.generateOutputExt(data,global_child.key);
+		}
 		for(var i=0;i<this.childs.length;i++){
 			// this.replaceChildIntoTemplate(this.childs[i].key,this.childs[i].generateOutput());
 			data[this.childs[i].key]=this.childs[i].generateOutput();
+			this.childs[i].generateOutputExt(data,this.childs[i].key);
 		}
-		this.templateO=TemplateUtils.replaceTemplate(this.templateO,data);
+		
+		if(!this.isShadow){
+			this.templateO=TemplateUtils.replaceTemplate(this.templateO,data);
+		}
+		if(this.isShadow){
+			console.log('shadow');
+		}
 		for(var i=0;i<this.ctrlObjs.length;i++){
-			this.ctrlObjs[i].generateOutput();
+			this.ctrlObjs[i].generateOutput(data);
 		}
 		return super.generateOutput();
 	}
@@ -436,7 +469,14 @@ class BodyMulti extends BodyBase{
 	generateOutput(){
 		var output='';
 		var data={};
+		for(var key in this.parent.bodyChilds){
+			var global_child=this.parent.bodyChilds[key];
+			data[global_child.key]=global_child.generateOutput();
+			global_child.generateOutputExt(data,global_child.key);
+		}
 		data[this.bodyRow.selectedChild.key]=this.bodyRow.selectedChild.generateOutput();
+		this.bodyRow.selectedChild.generateOutputExt(data,this.bodyRow.selectedChild.key);
+		
 		output+=TemplateUtils.replaceTemplate(this.template,data);
 		//for(var i=0;i<this.ctrlObjs.length;i++){
 		//	this.ctrlObjs[i].generateOutput();
@@ -636,6 +676,7 @@ class RepeatCtrl extends CommandCtrl{
 		var data={};
 		for(var i=1;i<this.parent.bodyRows.length;i++){
 			data[this.parent.bodyRows[i].selectedChild.key]=this.parent.bodyRows[i].selectedChild.generateOutput();
+			this.parent.bodyRows[i].selectedChild.generateOutputExt(data,this.parent.bodyRows[i].selectedChild.key);
 			output+=TemplateUtils.replaceTemplate(this.parent.template,data);
 		}
 		//for(var i=0;i<this.ctrlObjs.length;i++){
@@ -661,15 +702,23 @@ class ShadowCtrl extends AutoCtrl{
 	createUI(){
 		//no UI
 	}
-	generateOutput(){
+	generateOutput(preData){
 		var parent=this.parent;
 		var targetShadow=parent.parent.bodyValues[this.shadowFrom];
 		//todo: shadow default output
 		parent.startBuilding();
+		
 		var data={};
-		for(var i=0;i<targetShadow.childs.length;i++){
-			var aChild=targetShadow.childs[i];
-			data[aChild.key]=aChild.generateOutput();
+		if (preData!==undefined) data=JSON.parse(JSON.stringify(preData));
+		if(targetShadow instanceof BodyMulti){
+			data[targetShadow.bodyRow.selectedChild.key]=targetShadow.bodyRow.selectedChild.generateOutput();
+			targetShadow.bodyRow.selectedChild.generateOutputExt(data,targetShadow.bodyRow.selectedChild.key);
+		}else{
+			for(var i=0;i<targetShadow.childs.length;i++){
+				var aChild=targetShadow.childs[i];
+				data[aChild.key]=aChild.generateOutput();
+				aChild.generateOutputExt(data,aChild.key);
+			}
 		}
 		parent.templateO=TemplateUtils.replaceTemplate(parent.templateO,data);
 		//todo: shadow repeat output
@@ -677,13 +726,28 @@ class ShadowCtrl extends AutoCtrl{
 		
 		if (targetShadow.childsRepeat===undefined) return;
 		//var repeatCount=targetShadow.childsRepeat.length;
-		for(var j=0;j<targetShadow.childsRepeat.length;j++){
-			parent.startBuilding();
-			for(var i=0;i<targetShadow.childsRepeat[j].length;i++){
-				data[targetShadow.childsRepeat[j][i].key]=targetShadow.childsRepeat[j][i].generateOutput();
+		if(targetShadow instanceof BodyMulti){
+			for(var j=1;j<targetShadow.bodyRows.length;j++){
+				parent.startBuilding();
+				data={};
+				if (preData!==undefined) data=JSON.parse(JSON.stringify(preData));
+				var bodyRow=targetShadow.bodyRows[j];
+				data[bodyRow.selectedChild.key]=bodyRow.selectedChild.generateOutput();
+				bodyRow.selectedChild.generateOutputExt(data,bodyRow.selectedChild.key);
+
+				parent.templateO=TemplateUtils.replaceTemplate(parent.templateO,data);
+				output+=parent.templateO;
 			}
-			parent.templateO=TemplateUtils.replaceTemplate(parent.templateO,data);
-			output+=parent.templateO;
+		}else{
+				for(var j=0;j<targetShadow.childsRepeat.length;j++){
+				parent.startBuilding();
+				for(var i=0;i<targetShadow.childsRepeat[j].length;i++){
+					data[targetShadow.childsRepeat[j][i].key]=targetShadow.childsRepeat[j][i].generateOutput();
+					targetShadow.childsRepeat[j][i].generateOutputExt(data,targetShadow.childsRepeat[j][i].key);
+				}
+				parent.templateO=TemplateUtils.replaceTemplate(parent.templateO,data);
+				output+=parent.templateO;
+			}
 		}
 		parent.templateO=output;
 		return output;
@@ -744,6 +808,10 @@ class Template extends XMLTemplate{
 	}
 	generateOutput(){
 		return this.body.generateOutput();
+	}
+
+	generateOutputExt(it,key){
+		return this.body.generateOutputExt(it,key);
 	}
 	
 	getBuildingTemplate(){
@@ -866,6 +934,24 @@ class ChildWrapper extends XMLTemplate{
 			return this.objTemplate.generateOutput();
 		}
 	}
+
+	generateOutputExt(it,key){
+		if(this.isInputChild()){
+			/*
+			if(this.validInput()){
+				return this.getValueInput();
+			}*/
+			return;
+		}else if(this.type.toUpperCase()=='IN'){
+			console.log(this.objTemplate.generateOutput());
+			return this.objTemplate.generateOutputExt(it,key);
+			//return this.value;
+		}
+		else{
+			return this.objTemplate.generateOutputExt(it,key);
+		}
+	}
+
 	getValueInput(){
 		//todo1:implement get value input
 		return this.value;
