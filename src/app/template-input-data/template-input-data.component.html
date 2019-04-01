@@ -1,12 +1,16 @@
 <div (keydown)="onKeyDown($event)" [attr.data-id]="'tid-pl'+GTModel.parentModel.level+'-ps'+GTModel.parentModel.stt+'-cl'+GTModel.level+'-cs'+GTModel.stt" class="template-input-data">
 <ng-container [ngSwitch]="GTModel.inputType">
   <input *ngSwitchCase="'Boolean'" name="rememberMe" type="checkbox" [(ngModel)]="GTModel.value" />
-  <input *ngSwitchCase="'text'" type="text" [(ngModel)]="GTModel.value" />
+  <input *ngSwitchCase="'TEXT'" type="text" [(ngModel)]="GTModel.value" />
   <ng-container *ngSwitchCase="'List'">
       <select [(ngModel)]="GTModel.value">
         <option *ngFor="let value of GTModel.values; let i=index "  [ngValue]="value._">{{value.$.alias}}</option>
       </select>
     </ng-container>
+    <ng-container *ngSwitchCase="'EXCEL'">
+      <input type="button" value="Select Excel File" (click)="onSelectExcelBtnClick()"/>
+    </ng-container>
   <!-- <div  *ngSwitchDefault>Unknown</div>-->
 </ng-container>
+
 </div>

@@ -57,3 +57,8 @@ app.on('activate', () => {
         createWindow();
     }
 });
+
+process.on('uncaughtException', function (exception) {
+    // handle or ignore error
+    console.log('uncaughtException',exception);
+ });

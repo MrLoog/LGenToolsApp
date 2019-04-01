@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import * as $ from 'jquery';
+import { selectFileExcel } from 'src/gentools';
 
 @Component({
   selector: 'app-template-input-data',
@@ -8,17 +9,25 @@ import * as $ from 'jquery';
 })
 export class TemplateInputDataComponent implements OnInit {
   GTModel:any;
+  arr:any[];
   constructor() { }
 
   ngOnInit() {
   }
 
   changeBooleanValue(){
+// tslint:disable-next-line: triple-equals
     this.GTModel.value=(this.GTModel.value=='true'?'false':'true');
   }
+
+  onSelectExcelBtnClick():void {
+    this.arr=[];
+    selectFileExcel(this.arr,this);
+  }
+
   onKeyDown(event) {
     if(event.ctrlKey && '37383940'.replace(event.keyCode,'').length!=8) {
-      var source=$(event.srcElement).parents('.template-input-data')[0];
+      let source=$(event.srcElement).parents('.template-input-data')[0];
       var dataId=$(source).attr('data-id');
       var rowStt=dataId.substring(0,dataId.indexOf('-cl')).substring(dataId.indexOf('-ps')+3);
       var cStt=dataId.substring(dataId.indexOf('-cs')+3);

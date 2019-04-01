@@ -9,6 +9,7 @@ var dialog = app.dialog;
 var path = app.require('path');
 let fs = app.require('fs');
 var parseString = app.require('xml2js').parseString;
+var XLSX = app.require('xlsx');
 
 
 var TemplateUtils={
@@ -877,12 +878,14 @@ class ChildWrapper extends XMLTemplate{
 		this.forBody=TemplateUtils.index(source,TemplateUtils.FOR_VALUE_PATH);
 		var self=this;
 		if(this.isInputChild()){
-			this.inputType=TemplateUtils.index(source,TemplateUtils.INPUT_TYPE_INDEX_PATH);
+			this.inputType=TemplateUtils.index(source,TemplateUtils.INPUT_TYPE_INDEX_PATH).toUpperCase();
 			if(this.inputType.toUpperCase()=="LIST"){
 				//todo:implement list value
 				this.value=this.values[0]._;
 			}else if(this.inputType.toUpperCase()=="BOOLEAN"){
 				this.value=this.value=='true';
+			}else if(this.inputType.toUpperCase()=="EXCEL"){
+				this.value='';
 			}
 		}else if(this.type.toUpperCase()=='OUT'){
 			this.loadObjTemplate();
@@ -921,7 +924,11 @@ class ChildWrapper extends XMLTemplate{
 	}
 	generateOutput(){
 		if(this.isInputChild()){
-			if(this.validInput()){
+			if(this.inputType.toUpperCase()=='EXCEL'){
+				var result= this.parseExcelOutput();
+				console.log(result);
+				return result;
+			}else if(this.validInput()){
 				return this.getValueInput();
 			}
 			return;
@@ -933,6 +940,27 @@ class ChildWrapper extends XMLTemplate{
 		else{
 			return this.objTemplate.generateOutput();
 		}
+	}
+
+	parseExcelOutput(){
+		var workbook=this.value[0];
+		var sheetName1=workbook.SheetNames[0];
+		var result=[];
+		for(var cell in workbook.Sheets[sheetName1]){
+			var find_column='';
+			var find_row=0;
+			for(var i=0;i<cell.length;i++){
+				if(!isNaN(cell[i])){
+					find_row=cell.substring(i)*1;
+					find_column=cell.replace(find_row,'');
+					break;
+				}
+			}
+			if(find_row==0 || find_column=='') continue;
+			if(result[find_row]===undefined) result[find_row]={};
+			result[find_row][find_column]=workbook.Sheets[sheetName1][cell].v;
+		}
+		return result;
 	}
 
 	generateOutputExt(it,key){
@@ -1031,6 +1059,7 @@ export class TemplateFactory{
 }
 
 export function selectFile(arr,factoryUI){
+	var defaultPath=process.mainModule.paths[0].split('node_modules')[0].slice(0, -1);
 	dialog.showOpenDialog((fileNames) => {
     // fileNames is an array that contains all the selected
     if(fileNames === undefined){
@@ -1058,6 +1087,26 @@ export function selectFile(arr,factoryUI){
     });
 });
 }
+
+export function selectFileExcel(arr,factoryUI){
+	dialog.showOpenDialog({
+		title: "Select Root Template File", 
+		filters: [{
+			name: "Spreadsheets",
+			extensions: "xls|xlsx|xlsm|xlsb|xml|xlw|xlc|csv|txt|dif|sylk|slk|prn|ods|fods|uos|dbf|wks|123|wq1|qpw|htm|html".split("|")
+		}]
+},(fileNames) => {
+    // fileNames is an array that contains all the selected
+    if(fileNames === undefined){
+        console.log("No file selected");
+        return;
+		}
+		arr.push(XLSX.readFile(fileNames[0]));
+		factoryUI.GTModel.value=arr;
+	console.log(fileNames);
+	});
+}
+
 
 class DataSource{
 	constructor(options){
