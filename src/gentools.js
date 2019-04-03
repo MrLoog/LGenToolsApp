@@ -40,9 +40,10 @@ var TemplateUtils={
 	},
 	replaceTemplate(template,data){
 		template=template.replace(new RegExp('\n','g'),'{{=it.SYSTEM_NEWLINE}}');
-		template=template.replace(new RegExp(' ','g'),'{{=it.SYSTEM_SPACE}}');
+		//template=template.replace(new RegExp(' ','g'),'{{=it.SYSTEM_SPACE}}');
 		template=template.replace(new RegExp('\t','g'),'{{=it.SYSTEM_TAB}}');
 		//template=template.replace(new RegExp("\\\\'",'g'),'{{=it.SYSTEM_COMMA}}');
+		template=template.replace(new RegExp("\\\\ (?![^{]*})",'g'),'{{=it.SYSTEM_SPACE}}');
 		template=template.replace(new RegExp("\\\\'(?![^{]*})",'g'),'{{=it.SYSTEM_COMMA}}');
 		template=template.replace(new RegExp('@','g'),'SYSTEM_KEEP_TO'); //@
 		data.SYSTEM_NEWLINE='\n';
@@ -76,6 +77,7 @@ var TemplateUtils={
 //constant Body Object
 TemplateUtils.BODY_VALUE_INDEX_PATH='0.value.0._';
 TemplateUtils.BODY_TYPE_INDEX_PATH='0.value.0.$.type';
+TemplateUtils.BODY_SOURCE_INDEX_PATH='0.value.0.$.source';
 TemplateUtils.BODY_REPEAT_INDEX_PATH='0.value.0.$.repeat';
 TemplateUtils.BODY_SREPEAT_INDEX_PATH='0.value.0.$.step-repeat';
 TemplateUtils.BODY_ARRAY_INDEX_PATH='0.value';
@@ -90,6 +92,7 @@ TemplateUtils.KEY_INDEX_PATH='$.key';
 TemplateUtils.FOR_VALUE_PATH='$.for';
 TemplateUtils.TEMPLATE_LIST_INDEX_PATH='templates.template';
 TemplateUtils.TYPE_INDEX_PATH='$.type';
+TemplateUtils.SOURCE_INDEX_PATH='$.source';
 TemplateUtils.INPUT_TYPE_INDEX_PATH='$.inputType';
 
 TemplateUtils.CHILD_VALUE_PATH='value.0';
@@ -179,6 +182,10 @@ class BodyWrapper extends XMLTemplate{
 				var bodyMulti=new BodyMulti(this.createDataInit(source));
 				this.bodyValues[bodyMulti.name]=bodyMulti;
 				bodyMulti.stt=i;
+			}else if(source.$.type.toUpperCase()=='EXCEL'){
+				var bodyExcel=new BodyExcel(this.createDataInit(source));
+				this.bodyValues[bodyExcel.name]=bodyExcel;
+				bodyExcel.stt=i;
 			}else{
 				var bodyPart=new BodyPart(this.createDataInit(source));
 				this.bodyValues[bodyPart.name]=bodyPart;
@@ -279,6 +286,8 @@ class BodyValue extends BodyBase{
 		this.key=TemplateUtils.index(source,'$.key');
 		this.templatePath=TemplateUtils.index(source,'_');
 		this.type=TemplateUtils.index(source,'$.type');
+		this.sourceT=TemplateUtils.index(source,'$.source');
+		this.sourceT=(this.sourceT===undefined?'':this.sourceT);
 		this.bodyRow=new BodyRow(this.createDataInit(this.source));
 		this.bodyRow.stt=0;
 		this.bodyRows=[];
@@ -287,14 +296,16 @@ class BodyValue extends BodyBase{
 	}
 	loadTemplate(){
 		var self=this;
-		if(this.type.toUpperCase()=='IN' || this.type.toUpperCase()=='STRUCT'){
-			// self.parent.template=self.template=self.templatePath;
-			self.template=self.templatePath;
-		}else if (this.type.toUpperCase()=='OUT'){
+		if (this.sourceT.toUpperCase()=='OUT'){
 			this.dataSource.loadTemplate(self.rootFolder,self.templatePath,function(data){
 				self.template=data;
 			});
-		}
+		}else {
+			//IN , MULTI,EXCEL STRUCT
+			//(this.type.toUpperCase()=='IN' || this.type.toUpperCase()=='STRUCT') 
+			// self.parent.template=self.template=self.templatePath;
+			self.template=self.templatePath;
+		} 
 	}
 	createUI(){
 		super.createUI();
@@ -387,6 +398,115 @@ class BodyPart extends BodyValue{
 	createUI(){
 		super.createUI();
 		this.generateCtrl();
+		this.generateChildUI();
+	}
+	generateCtrl(){
+		for(var i=0;i<this.ctrlObjs.length;i++){
+			this.ctrlObjs[i].createUI();
+		}
+	}
+	// createDataInit(){
+		// var data=super.createDataInit();
+		// return data;
+	// }
+	
+	
+	
+	
+	removeBodyRow(bodyRow){
+		console.log('remove normal repeat');
+		var index=bodyRow.repeatIndex*1;
+		this.childsRepeat.splice(index, 1);// not contain first child
+		this.bodyRows.splice(index+1, 1);
+		//reset index
+		for(var i=index+1;i<this.bodyRows.length;i++){
+			this.bodyRows[i].repeatIndex=i-1;
+		}
+	}
+	
+	cloneChilds(){
+		var childs=[];
+		var bodyRow=new BodyRow(this.createDataInit(this.source));
+		bodyRow.childs=childs;
+		this.bodyRows.push(bodyRow);
+		for(var i=0;i<this.childs.length;i++){
+			var aChild=new ChildWrapper(this.createDataInit(this.childs[i].source));
+			aChild.setFactoryUI(this.factoryUI);
+			childs.push(aChild);
+			aChild.stt=i;
+			bodyRow.addChild(aChild);
+		}
+		return bodyRow;
+	}
+
+	generateChildRepeatUI(i){
+		this.bodyRows[i+1].createUI();
+		for(var j=0;j< this.childsRepeat[i].length;j++){
+			this.childsRepeat[i][j].createUI();
+		}
+	}
+}
+
+class BodyExcel extends BodyValue{
+	constructor(options){
+		super(options);
+		this.name=TemplateUtils.index(options.source,'$.name');
+		//this.initCtrl();
+	}
+	initCtrl(){
+		//
+		this.ctrlObjs=[];
+		if(TemplateUtils.index(this.source,'$.repeat')!==undefined){
+			var repeatCtrl=new RepeatCtrl(this.createDataInit(this.source));
+			this.ctrlObjs.push(repeatCtrl);
+		}
+		if(TemplateUtils.index(this.source,'$.shadowFrom')!==undefined){
+			var shadowCtrl=new ShadowCtrl(this.createDataInit(this.source));
+			this.ctrlObjs.push(shadowCtrl);
+			this.isShadow=true;
+		}
+	}
+	
+	generateOutput(clear){
+		var data={};
+		console.log('tesst');
+		for(var key in this.parent.bodyChilds){
+			var global_child=this.parent.bodyChilds[key];
+			data[global_child.key]=global_child.generateOutput();
+			global_child.generateOutputExt(data,global_child.key);
+		}
+		var excelChilds={};
+		var maxLength=0;
+		for(var i=0;i<this.childs.length;i++){
+			// this.replaceChildIntoTemplate(this.childs[i].key,this.childs[i].generateOutput());
+			if(this.childs[i].isInputChild() && this.childs[i].inputType.toUpperCase()=='EXCEL'){
+				excelChilds[this.childs[i].key]=this.childs[i].generateOutput();
+				if(excelChilds[this.childs[i].key].length>maxLength){
+					maxLength=excelChilds[this.childs[i].key].length;
+				}
+			}else{
+				data[this.childs[i].key]=this.childs[i].generateOutput();
+				this.childs[i].generateOutputExt(data,this.childs[i].key);
+			}
+		}
+		this.templateO='';
+		for(var i=0;i<maxLength;i++){
+			for(var c in excelChilds){
+				data[c]=excelChilds[c][i];
+			}
+			this.templateO+=TemplateUtils.replaceTemplate(this.template,data);
+		}
+		
+		/*
+		for(var i=0;i<this.ctrlObjs.length;i++){
+			this.ctrlObjs[i].generateOutput(data);
+		}*/
+		return super.generateOutput();
+	}
+	
+	createUI(){
+		super.createUI();
+		//this.generateCtrl();
 		this.generateChildUI();
 	}
 	generateCtrl(){
@@ -873,6 +993,8 @@ class ChildWrapper extends XMLTemplate{
 		this.name=TemplateUtils.index(source,TemplateUtils.NAME_INDEX_PATH);
 		this.key=TemplateUtils.index(source,TemplateUtils.KEY_INDEX_PATH);
 		this.type=TemplateUtils.index(source,TemplateUtils.TYPE_INDEX_PATH);
+		this.sourceT=TemplateUtils.index(source,TemplateUtils.SOURCE_INDEX_PATH);
+		this.sourceT=(this.sourceT===undefined?'':this.sourceT);
 		this.value=TemplateUtils.index(source,TemplateUtils.CHILD_VALUE_PATH);
 		this.values=TemplateUtils.index(source,'value');
 		this.forBody=TemplateUtils.index(source,TemplateUtils.FOR_VALUE_PATH);
@@ -887,9 +1009,9 @@ class ChildWrapper extends XMLTemplate{
 			}else if(this.inputType.toUpperCase()=="EXCEL"){
 				this.value='';
 			}
-		}else if(this.type.toUpperCase()=='OUT'){
+		}else if(this.sourceT.toUpperCase()=='OUT'){
 			this.loadObjTemplate();
-		}else if(this.type.toUpperCase()=='IN'){
+		}else{
 			this.dataSource.lookingObj(this.absolutePath,this.name,function(object){
 				self.initObjtemplate(object,self.absolutePath);
 			});
@@ -910,14 +1032,10 @@ class ChildWrapper extends XMLTemplate{
 	}
 	createUI(){
 		super.createUI();
-		if(this.type.toUpperCase()=='IN'){
+		if(this.isInputChild()){
+			this.generateInput();
+		}else{
 			this.objTemplate.createUI();
-		}else if(this.type.toUpperCase()=='OUT'){
-			this.objTemplate.createUI();
-		}else{ 
-			if(this.isInputChild()){
-				this.generateInput();
-			}
 		}
 	}
 	generateInput(){
@@ -926,19 +1044,14 @@ class ChildWrapper extends XMLTemplate{
 		if(this.isInputChild()){
 			if(this.inputType.toUpperCase()=='EXCEL'){
 				var result= this.parseExcelOutput();
-				console.log(result);
 				return result;
 			}else if(this.validInput()){
 				return this.getValueInput();
 			}
 			return;
-		}else if(this.type.toUpperCase()=='IN'){
-			console.log(this.objTemplate.generateOutput());
+		}else {
 			return this.objTemplate.generateOutput();
 			//return this.value;
-		}
-		else{
-			return this.objTemplate.generateOutput();
 		}
 	}
 
@@ -946,6 +1059,7 @@ class ChildWrapper extends XMLTemplate{
 		var workbook=this.value[0];
 		var sheetName1=workbook.SheetNames[0];
 		var result=[];
+		var rows=[];
 		for(var cell in workbook.Sheets[sheetName1]){
 			var find_column='';
 			var find_row=0;
@@ -957,9 +1071,23 @@ class ChildWrapper extends XMLTemplate{
 				}
 			}
 			if(find_row==0 || find_column=='') continue;
-			if(result[find_row]===undefined) result[find_row]={};
-			result[find_row][find_column]=workbook.Sheets[sheetName1][cell].v;
+			if(rows[find_row]===undefined) rows[find_row]={};
+			rows[find_row][find_column]=workbook.Sheets[sheetName1][cell].v;
 		}
+		var box=[];
+		var pack=[];
+		for(var i=0;i<rows.length;i++){
+			var c_row=rows[i];
+			if(c_row!==undefined){
+				pack.push(c_row);
+			}
+			if(c_row===undefined && pack.length>0){
+				box.push(pack)
+				pack=[];
+			}
+		}
+		box.push(pack);
+		result=box;
 		return result;
 	}
 
@@ -970,12 +1098,7 @@ class ChildWrapper extends XMLTemplate{
 				return this.getValueInput();
 			}*/
 			return;
-		}else if(this.type.toUpperCase()=='IN'){
-			console.log(this.objTemplate.generateOutput());
-			return this.objTemplate.generateOutputExt(it,key);
-			//return this.value;
-		}
-		else{
+		}else{
 			return this.objTemplate.generateOutputExt(it,key);
 		}
 	}
