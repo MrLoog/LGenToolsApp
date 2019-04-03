@@ -1076,14 +1076,19 @@ class ChildWrapper extends XMLTemplate{
 		}
 		var box=[];
 		var pack=[];
+		var empty_count=0;
 		for(var i=0;i<rows.length;i++){
 			var c_row=rows[i];
 			if(c_row!==undefined){
 				pack.push(c_row);
 			}
-			if(c_row===undefined && pack.length>0){
+			if(c_row===undefined){
+				empty_count+=1
+			}
+			if(empty_count==2 || (c_row===undefined && pack.length>0)){
 				box.push(pack)
 				pack=[];
+				empty_count=0;
 			}
 		}
 		box.push(pack);
