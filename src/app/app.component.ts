@@ -12,6 +12,7 @@ import {
   ViewChild,
   Inject
 } from '@angular/core';
+
 import {selectFile} from "../gentools";
 import { TemplateRegionComponent } from './template-region/template-region.component';
 import { DynCompServiceService } from './dyn-comp-service.service'

@@ -10,6 +10,12 @@
     <ng-container *ngSwitchCase="'EXCEL'">
       <input type="button" value="Select Excel File" (click)="onSelectExcelBtnClick()"/>
     </ng-container>
+    <ng-container *ngSwitchCase="'DATALIST'">
+      <input attr.list="{{GTModel.level + 'inp_dropdown'+GTModel.key}}" type="text" [(ngModel)]="GTModel.value">
+      <datalist id="{{GTModel.level + 'inp_dropdown'+GTModel.key}}">
+        <option *ngFor="let value of GTModel.values; let i=index "  [ngValue]="value._">{{value.$.alias}}</option>
+      </datalist>
+    </ng-container>
   <!-- <div  *ngSwitchDefault>Unknown</div>-->
 </ng-container>
 

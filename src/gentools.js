@@ -182,6 +182,10 @@ class BodyWrapper extends XMLTemplate{
 				var bodyMulti=new BodyMulti(this.createDataInit(source));
 				this.bodyValues[bodyMulti.name]=bodyMulti;
 				bodyMulti.stt=i;
+			}else if(source.$.type.toUpperCase()=='MULTI_DROP'){
+				var bodyMultiDrop=new BodyMultiDrop(this.createDataInit(source));
+				this.bodyValues[bodyMultiDrop.name]=bodyMultiDrop;
+				bodyMultiDrop.stt=i;
 			}else if(source.$.type.toUpperCase()=='EXCEL'){
 				var bodyExcel=new BodyExcel(this.createDataInit(source));
 				this.bodyValues[bodyExcel.name]=bodyExcel;
@@ -653,6 +657,103 @@ class BodyMulti extends BodyBase{
 	}
 }
 
+class BodyMultiDrop extends BodyBase{
+
+	constructor(options){
+		super(options);
+		this.key=TemplateUtils.index(options.source,'$.key');
+		this.name=TemplateUtils.index(options.source,'$.name');
+		this.bodyRow=new BodyRowMultiDrop(this.createDataInit(this.source));
+		this.bodyRow.stt=0;
+		this.bodyRows=[];
+		this.bodyRows.push(this.bodyRow);
+		this.template=TemplateUtils.index(options.source,'_');
+		this.initCtrl();
+	}
+
+	initCtrl(){
+		this.ctrlObjs=[];
+		if(TemplateUtils.index(this.source,'$.repeat')!==undefined){
+			var repeatCtrl=new RepeatCtrl(this.createDataInit(this.source));
+			this.ctrlObjs.push(repeatCtrl);
+		}
+		// if(TemplateUtils.index(this.source,'$.shadowFrom')!==undefined){
+		// 	var shadowCtrl=new ShadowCtrl(this.createDataInit(this.source));
+		// 	this.ctrlObjs.push(shadowCtrl);
+		// }
+	}
+
+	addChild(aChild){
+		super.addChild(aChild);
+		this.bodyRow.addChild(aChild);
+	}
+
+	generateOutput(){
+		var output='';
+		var data={};
+		for(var key in this.parent.bodyChilds){
+			var global_child=this.parent.bodyChilds[key];
+			data[global_child.key]=global_child.generateOutput();
+			global_child.generateOutputExt(data,global_child.key);
+		}
+		data[this.bodyRow.selectedChild.key]=this.bodyRow.selectedChild.generateOutput();
+		this.bodyRow.selectedChild.generateOutputExt(data,this.bodyRow.selectedChild.key);
+		
+		output+=TemplateUtils.replaceTemplate(this.template,data);
+		//for(var i=0;i<this.ctrlObjs.length;i++){
+		//	this.ctrlObjs[i].generateOutput();
+		//}
+		for(var i=0;i<this.ctrlObjs.length;i++){
+			output+=this.ctrlObjs[i].generateOutputMulti();
+		}
+		return output;
+	}
+
+	createUI(){
+		super.createUI();
+		this.bodyRow.createUI();
+		this.generateCtrl();
+		//for(var i=0;i<this.childs.length;i++){
+		//	this.childs[i].createUI();
+		//}
+	}
+
+	generateCtrl(){
+		for(var i=0;i<this.ctrlObjs.length;i++){
+			this.ctrlObjs[i].createUI();
+		}
+	}
+
+	removeBodyRow(bodyRow){
+		console.log('remove body multi');
+		var index=bodyRow.repeatIndex*1;
+		this.childsRepeat.splice(index, 1);// not contain first child
+		this.bodyRows.splice(index+1, 1);
+		//reset index
+		for(var i=index+1;i<this.bodyRows.length;i++){
+			this.bodyRows[i].repeatIndex=i-1;
+		}
+	}
+	
+
+	cloneChilds(){
+		var bodyRow=new BodyRowMultiDrop(this.createDataInit(this.source));
+		this.bodyRows.push(bodyRow);
+		for(var i=0;i<this.childs.length;i++){
+			var aChild=new ChildWrapper(this.createDataInit(this.childs[i].source));
+			aChild.setFactoryUI(this.factoryUI);
+			aChild.stt=i;
+			bodyRow.addChild(aChild);
+		}
+		return bodyRow;
+	}
+
+	generateChildRepeatUI(i){
+		this.bodyRows[i+1].createUI();
+		//do nothing
+	}
+}
+
 
 
 class RowWrapper extends XMLTemplate{
@@ -682,6 +783,56 @@ class BodyRowMulti extends RowWrapper{
 		super(options);
 		this.childs=[];
 		this.bodyRowMulti=true;
+	}
+
+	
+	addChild(aChild){
+		aChild.parentModel=this;
+		this.childs.push(aChild);
+		if(this.childs.length==1){
+			this.setSelectedChildByName(this.childs[0].name);
+		}
+	}
+
+	destroy(){
+		this.parent.removeBodyRow(this);
+		delete this;
+	}
+
+
+	setSelectedChildByName(name){
+		if(this.selectedChild!==undefined) this.selectedChild.hidden=true;
+		for(var i=0;i<this.parent.childs.length;i++){
+			if(this.parent.childs[i].name==name){
+				console.log('set selected name ',name);
+				this.selectedName=name;
+				this.selectedChild=this.childs[i];
+				this.selectedChild.hidden=false;
+				break;
+			}
+		}
+	}
+
+
+	createUI(){
+		super.createUI();
+		this.reloadUI();
+	}
+
+	reloadUI(){
+		if(this.selectedChild.createdUI){
+			this.selectedChild.hidden=false;
+			return;
+		}
+		this.selectedChild.createUI();
+	}
+}
+
+class BodyRowMultiDrop extends RowWrapper{
+	constructor(options){
+		super(options);
+		this.childs=[];
+		this.bodyRowMultiDrop=true;
 	}
 
 	
@@ -1001,7 +1152,7 @@ class ChildWrapper extends XMLTemplate{
 		var self=this;
 		if(this.isInputChild()){
 			this.inputType=TemplateUtils.index(source,TemplateUtils.INPUT_TYPE_INDEX_PATH).toUpperCase();
-			if(this.inputType.toUpperCase()=="LIST"){
+			if(this.inputType.toUpperCase()=="LIST" || this.inputType.toUpperCase()=="DATALIST"){
 				//todo:implement list value
 				this.value=this.values[0]._;
 			}else if(this.inputType.toUpperCase()=="BOOLEAN"){

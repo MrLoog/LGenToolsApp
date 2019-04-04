@@ -13,7 +13,8 @@ import { TemplateInputAreaComponent } from './template-input-area/template-input
 import { TemplateOutputAreaComponent } from './template-output-area/template-output-area.component';
 import { TemplateRegionComponent } from './template-region/template-region.component';
 import { DynCompServiceService } from './dyn-comp-service.service';
-import { TemplateInputDataComponent } from './template-input-data/template-input-data.component'
+import { TemplateInputDataComponent } from './template-input-data/template-input-data.component';
+import { SelectDropDownModule } from 'ngx-select-dropdown';
 
 @NgModule({
   declarations: [
@@ -31,7 +32,8 @@ import { TemplateInputDataComponent } from './template-input-data/template-input
     BrowserModule,
     NgxElectronModule,
     AppRoutingModule,
-    FormsModule
+    FormsModule,
+    SelectDropDownModule
   ],
   providers: [DynCompServiceService],
   bootstrap: [AppComponent],
