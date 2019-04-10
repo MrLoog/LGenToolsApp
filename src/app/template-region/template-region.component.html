@@ -21,8 +21,9 @@
 
     <ng-container *ngIf="GTModel.bodyRowMultiDrop; then bodyRowMultiDrop"></ng-container>
     <ng-template #bodyRowMultiDrop >
-        <ngx-select-dropdown (change)="selectionChanged($event)" [multiple]="true" [(ngModel)]="dataModel" [config]="config" [options]="dropdownOptions"></ngx-select-dropdown>
-      <input *ngIf="GTModel.stt!=0" type="button" value="Remove Row Multi" (click)="removeRow()"/>
+        <ngx-select-dropdown (change)="changeMultiBodyDrop($event)"  [multiple]="true" [(ngModel)]="GTModel.selectedChildDisplay" [config]="" [options]="GTModel.displayChilds"></ngx-select-dropdown>
+        <input  type="button" value="Test Row Multi Drop" (click)="testRowMultiDrop()"/>
+        <input *ngIf="GTModel.stt!=0" type="button" value="Remove Row Multi Drop" (click)="removeRow()"/>
     </ng-template>
 
     <ng-container *ngIf="GTModel.rootTemplate; then rootTemplate"></ng-container>

@@ -696,15 +696,17 @@ class BodyMultiDrop extends BodyBase{
 			data[global_child.key]=global_child.generateOutput();
 			global_child.generateOutputExt(data,global_child.key);
 		}
-		data[this.bodyRow.selectedChild.key]=this.bodyRow.selectedChild.generateOutput();
-		this.bodyRow.selectedChild.generateOutputExt(data,this.bodyRow.selectedChild.key);
+		for(var i=0;i<this.bodyRow.selectedChild.length;i++){
+			data[this.bodyRow.selectedChild[i].key]=this.bodyRow.selectedChild[i].generateOutput();
+			this.bodyRow.selectedChild[i].generateOutputExt(data,this.bodyRow.selectedChild[i].key);
+		}
 		
 		output+=TemplateUtils.replaceTemplate(this.template,data);
 		//for(var i=0;i<this.ctrlObjs.length;i++){
 		//	this.ctrlObjs[i].generateOutput();
 		//}
 		for(var i=0;i<this.ctrlObjs.length;i++){
-			output+=this.ctrlObjs[i].generateOutputMulti();
+			output+=this.ctrlObjs[i].generateOutputMultiDrop();
 		}
 		return output;
 	}
@@ -832,6 +834,9 @@ class BodyRowMultiDrop extends RowWrapper{
 	constructor(options){
 		super(options);
 		this.childs=[];
+		this.displayChilds=[];
+		this.selectedChildDisplay=[];
+		this.selectedChild=[];
 		this.bodyRowMultiDrop=true;
 	}
 
@@ -839,9 +844,9 @@ class BodyRowMultiDrop extends RowWrapper{
 	addChild(aChild){
 		aChild.parentModel=this;
 		this.childs.push(aChild);
-		if(this.childs.length==1){
-			this.setSelectedChildByName(this.childs[0].name);
-		}
+		this.displayChilds.push(aChild.name);
+		this.selectedChildDisplay.push(aChild.name);
+		this.setSelectedChildByName(this.childs[0].name);
 	}
 
 	destroy(){
@@ -851,6 +856,17 @@ class BodyRowMultiDrop extends RowWrapper{
 
 
 	setSelectedChildByName(name){
+		this.selectedChild.length=0;
+		for(var i=0;i<this.childs.length;i++){
+			if(this.selectedChildDisplay.indexOf(this.childs[i].name)>-1){
+				this.selectedChild.push(this.childs[i]);
+				this.childs[i].hidden=false;
+			}else{
+				//this.selectedChild.splice(this.selectedChild.indexOf(this.childs[i]),1);
+				this.childs[i].hidden=true;
+			}
+		}
+		/*
 		if(this.selectedChild!==undefined) this.selectedChild.hidden=true;
 		for(var i=0;i<this.parent.childs.length;i++){
 			if(this.parent.childs[i].name==name){
@@ -860,7 +876,7 @@ class BodyRowMultiDrop extends RowWrapper{
 				this.selectedChild.hidden=false;
 				break;
 			}
-		}
+		}*/
 	}
 
 
@@ -870,11 +886,24 @@ class BodyRowMultiDrop extends RowWrapper{
 	}
 
 	reloadUI(){
-		if(this.selectedChild.createdUI){
-			this.selectedChild.hidden=false;
-			return;
+		for(var i=0;i<this.childs.length;i++){
+			console.log('generate');
+			if(this.selectedChildDisplay.indexOf(this.childs[i].name)>-1){
+				if(this.childs[i].createdUI){
+					this.childs[i].hidden=false;
+				}else{
+					this.childs[i].createUI();
+					this.childs[i].hidden=false;
+				}
+			}else{
+				if(this.childs[i].createdUI){
+					this.childs[i].hidden=true;
+				}else{
+					this.childs[i].createUI();
+					this.childs[i].hidden=true;
+				}
+			}
 		}
-		this.selectedChild.createUI();
 	}
 }
 
@@ -950,6 +979,23 @@ class RepeatCtrl extends CommandCtrl{
 			data[this.parent.bodyRows[i].selectedChild.key]=this.parent.bodyRows[i].selectedChild.generateOutput();
 			this.parent.bodyRows[i].selectedChild.generateOutputExt(data,this.parent.bodyRows[i].selectedChild.key);
 			output+=TemplateUtils.replaceTemplate(this.parent.template,data);
+		}
+		//for(var i=0;i<this.ctrlObjs.length;i++){
+		//	this.ctrlObjs[i].generateOutput();
+		//}
+		return output;
+	}
+
+	generateOutputMultiDrop(){
+		var output='';
+		var data={};
+		for(var j=1;j<this.parent.bodyRows.length;j++){
+			var bodyRow=this.parent.bodyRows[j];
+			for(var i=0;i<bodyRow.selectedChild.length;i++){
+				data[bodyRow.selectedChild[i].key]=bodyRow.selectedChild[i].generateOutput();
+				bodyRow.selectedChild[i].generateOutputExt(data,bodyRow.selectedChild[i].key);
+				output+=TemplateUtils.replaceTemplate(this.parent.template,data);
+			}
 		}
 		//for(var i=0;i<this.ctrlObjs.length;i++){
 		//	this.ctrlObjs[i].generateOutput();
@@ -1163,7 +1209,7 @@ class ChildWrapper extends XMLTemplate{
 		}else if(this.sourceT.toUpperCase()=='OUT'){
 			this.loadObjTemplate();
 		}else{
-			this.dataSource.lookingObj(this.absolutePath,this.name,function(object){
+			this.dataSource.lookingObj(this.absolutePath,this.value,function(object){
 				self.initObjtemplate(object,self.absolutePath);
 			});
 		}

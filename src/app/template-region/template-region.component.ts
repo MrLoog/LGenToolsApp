@@ -50,11 +50,22 @@ export class TemplateRegionComponent implements OnInit {
     this.removeMe();
   }
 
+  testRowMultiDrop():void{
+    
+    console.log('test');
+  }
+
   changeMultiBody(obj:any):void{
     console.log(obj);
     this.GTModel.setSelectedChildByName(this.GTModel.selectedName);
     this.GTModel.reloadUI();
 
+  }
+
+  changeMultiBodyDrop(obj:any):void{
+    console.log(obj);
+    this.GTModel.setSelectedChildByName('');
+    this.GTModel.reloadUI();
   }
 
   destroyUI():void{
