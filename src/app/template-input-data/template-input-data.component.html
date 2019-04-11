@@ -1,17 +1,18 @@
-<div (keydown)="onKeyDown($event)" [attr.data-id]="'tid-pl'+GTModel.parentModel.level+'-ps'+GTModel.parentModel.stt+'-cl'+GTModel.level+'-cs'+GTModel.stt" class="template-input-data">
-<ng-container [ngSwitch]="GTModel.inputType">
-  <input *ngSwitchCase="'Boolean'" name="rememberMe" type="checkbox" [(ngModel)]="GTModel.value" />
-  <input *ngSwitchCase="'TEXT'" type="text" [(ngModel)]="GTModel.value" />
+<div  [attr.data-id]="'tid-pl'+GTModel.parentModel.level+'-ps'+GTModel.parentModel.stt+'-cl'+GTModel.level+'-cs'+GTModel.stt" class="template-input-data">
+  <!-- (keydown)="onKeyDown($event)" -->
+  <ng-container [ngSwitch]="GTModel.inputType">
+  <input #inputValue *ngSwitchCase="'Boolean'" name="rememberMe" type="checkbox" value="{{GTModel.value}}" />
+  <input #inputValue #inputValue *ngSwitchCase="'TEXT'" type="text" value="{{GTModel.value}}" />
   <ng-container *ngSwitchCase="'List'">
-      <select [(ngModel)]="GTModel.value">
+      <select #inputValue  value="{{GTModel.value}}">
         <option *ngFor="let value of GTModel.values; let i=index "  [ngValue]="value._">{{value.$.alias}}</option>
       </select>
     </ng-container>
     <ng-container *ngSwitchCase="'EXCEL'">
-      <input type="button" value="Select Excel File" (click)="onSelectExcelBtnClick()"/>
+      <input  type="button" value="Select Excel File" (click)="onSelectExcelBtnClick()"/>
     </ng-container>
     <ng-container *ngSwitchCase="'DATALIST'">
-      <input attr.list="{{GTModel.level + 'inp_dropdown'+GTModel.key}}" type="text" [(ngModel)]="GTModel.value">
+      <input  #inputValue value="{{GTModel.value}}" attr.list="{{GTModel.level + 'inp_dropdown'+GTModel.key}}" type="text" >
       <datalist id="{{GTModel.level + 'inp_dropdown'+GTModel.key}}">
         <option *ngFor="let value of GTModel.values; let i=index "  [ngValue]="value._">{{value.$.alias}}</option>
       </datalist>

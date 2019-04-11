@@ -1307,6 +1307,7 @@ class ChildWrapper extends XMLTemplate{
 
 	getValueInput(){
 		//todo1:implement get value input
+		this.UIControl._component.gatherValue();
 		return this.value;
 	}
 	

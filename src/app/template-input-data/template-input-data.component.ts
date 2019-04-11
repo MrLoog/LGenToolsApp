@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
 import * as $ from 'jquery';
 import { selectFileExcel } from 'src/gentools';
 
@@ -8,6 +8,8 @@ import { selectFileExcel } from 'src/gentools';
   styleUrls: ['./template-input-data.component.css']
 })
 export class TemplateInputDataComponent implements OnInit {
+  @ViewChild('inputValue') inputValue: ElementRef;
+
   GTModel:any;
   arr:any[];
   constructor() { }
@@ -25,6 +27,15 @@ export class TemplateInputDataComponent implements OnInit {
     selectFileExcel(this.arr,this);
   }
 
+  onBlurInput(ui: any): void {
+    this.GTModel.value = ui.target.value;
+  }
+
+  gatherValue(){
+    console.log('???');
+    this.GTModel.value=this.inputValue.nativeElement.value;
+  }
+/*
   onKeyDown(event) {
     if(event.ctrlKey && '37383940'.replace(event.keyCode,'').length!=8) {
       let source=$(event.srcElement).parents('.template-input-data')[0];
@@ -64,4 +75,5 @@ export class TemplateInputDataComponent implements OnInit {
     }
    
   }
+  */
 }
