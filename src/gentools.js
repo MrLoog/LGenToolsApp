@@ -97,6 +97,14 @@ TemplateUtils.INPUT_TYPE_INDEX_PATH='$.inputType';
 
 TemplateUtils.CHILD_VALUE_PATH='value.0';
 
+//constant Ctrl
+TemplateUtils.META_KEY_CTRL='META_CTRL';
+TemplateUtils.META_CTRL_TYPE='CTRL_TYPE';
+TemplateUtils.META_CTRL_TYPE_REPEAT='REPEAT';
+TemplateUtils.META_CTRL_TYPE_SHADOW='SHADOW';
+TemplateUtils.META_CTRL_REPEAT_INDEX='REPEAT_INDEX';
+TemplateUtils.META_CTRL_REPEAT_TOTAL='REPEAT_TOTAL';
+
 class XMLTemplate{
 	constructor(options){
 		var source=this.source=options.source;
@@ -960,9 +968,13 @@ class RepeatCtrl extends CommandCtrl{
 		var curOutput=this.parent.templateO;
 		var parent=this.parent;
 		if (parent.childsRepeat===undefined) return;
+		var data={};
 		for(var j=0;j<parent.childsRepeat.length;j++){
 				this.parent.startBuilding();
-				var data={};
+				var extra={};
+				extra[TemplateUtils.META_CTRL_REPEAT_TOTAL]=parent.childsRepeat.length;
+				extra[TemplateUtils.META_CTRL_REPEAT_INDEX]=j;
+				data=this.getData(extra);
 				for(var i=0;i<parent.childsRepeat[j].length;i++){
 					data[parent.childsRepeat[j][i].key]=parent.childsRepeat[j][i].generateOutput();
 				}
@@ -970,6 +982,18 @@ class RepeatCtrl extends CommandCtrl{
 			curOutput+=parent.templateO;
 		}
 		parent.templateO=curOutput;
+	}
+
+	getData(dt){
+		var data={};
+		data[TemplateUtils.META_KEY_CTRL]={};
+		data[TemplateUtils.META_KEY_CTRL][TemplateUtils.META_CTRL_TYPE]=TemplateUtils.META_CTRL_TYPE_REPEAT;
+		if(dt!==undefined){
+			for(var key in dt){
+				data[TemplateUtils.META_KEY_CTRL][key]=dt[key];
+			}
+		}
+		return data;
 	}
 	
 	generateOutputMulti(){
