@@ -32,7 +32,6 @@ export class TemplateInputDataComponent implements OnInit {
   }
 
   gatherValue(){
-    console.log('???');
     this.GTModel.value=this.inputValue.nativeElement.value;
   }
 /*

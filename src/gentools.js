@@ -97,13 +97,14 @@ TemplateUtils.INPUT_TYPE_INDEX_PATH='$.inputType';
 
 TemplateUtils.CHILD_VALUE_PATH='value.0';
 
-//constant Ctrl
-TemplateUtils.META_KEY_CTRL='META_CTRL';
+//constant META
+TemplateUtils.META='META';
+TemplateUtils.META_BODY_CTRL='BODY_CTRL';
+TemplateUtils.META_REPEAT_TOTAL='REPEAT_TOTAL';
 TemplateUtils.META_CTRL_TYPE='CTRL_TYPE';
-TemplateUtils.META_CTRL_TYPE_REPEAT='REPEAT';
-TemplateUtils.META_CTRL_TYPE_SHADOW='SHADOW';
-TemplateUtils.META_CTRL_REPEAT_INDEX='REPEAT_INDEX';
-TemplateUtils.META_CTRL_REPEAT_TOTAL='REPEAT_TOTAL';
+TemplateUtils.META_VALUE_CTRL_TYPE_REPEAT='CTRL_REPEAT';
+TemplateUtils.META_VALUE_CTRL_TYPE_SHADOW='CTRL_SHADOW';
+TemplateUtils.META_CTRL_REPEAT_INDEX='CTRL_REPEAT_INDEX';
 
 class XMLTemplate{
 	constructor(options){
@@ -164,6 +165,23 @@ class XMLTemplate{
 		if(this.onDestroyUI!==undefined){
 			this.onDestroyUI();
 		}
+	}
+
+	getData(dt,inheritData){
+		var data;
+		data={};
+		data[TemplateUtils.META]={};
+		if(dt!==undefined && dt!=null){
+			for(var key in dt){
+				data[TemplateUtils.META][key]=dt[key];
+			}
+		}
+		if(inheritData !==undefined && inheritData[TemplateUtils.META]!==undefined){
+			for(var key in inheritData[TemplateUtils.META]){
+				data[TemplateUtils.META][key]=inheritData[TemplateUtils.META][key];
+			}
+		}
+		return data;
 	}
 }
 
@@ -289,6 +307,9 @@ class BodyBase extends XMLTemplate{
 		this.childs.push(aChild);
 	}
 
+	
+	
+
 }
 
 class BodyValue extends BodyBase{
@@ -372,6 +393,7 @@ class BodyPart extends BodyValue{
 		if(TemplateUtils.index(this.source,'$.repeat')!==undefined){
 			var repeatCtrl=new RepeatCtrl(this.createDataInit(this.source));
 			this.ctrlObjs.push(repeatCtrl);
+			this.isRepeat=true;
 		}
 		if(TemplateUtils.index(this.source,'$.shadowFrom')!==undefined){
 			var shadowCtrl=new ShadowCtrl(this.createDataInit(this.source));
@@ -379,11 +401,24 @@ class BodyPart extends BodyValue{
 			this.isShadow=true;
 		}
 	}
+
+	getData(dt,inheritData){
+		var data=super.getData(dt,inheritData);
+		var dataMeta=data[TemplateUtils.META];
+		dataMeta[TemplateUtils.META_BODY_CTRL]='';
+		for(var key in this.ctrlObjs){
+			dataMeta[TemplateUtils.META_BODY_CTRL]+=this.ctrlObjs[key].name;
+			dataMeta[TemplateUtils.META_BODY_CTRL]+=',';
+		}
+		if(this.isRepeat){
+			dataMeta[TemplateUtils.META_REPEAT_TOTAL]=this.childsRepeat===undefined? 0 :this.childsRepeat.length;
+		}
+		return data;
+	}
 	
 	generateOutput(clear){
 		this.startBuilding();
-		var data={};
-		console.log('tesst');
+		var data=this.getData();
 		for(var key in this.parent.bodyChilds){
 			var global_child=this.parent.bodyChilds[key];
 			data[global_child.key]=global_child.generateOutput();
@@ -395,11 +430,8 @@ class BodyPart extends BodyValue{
 			this.childs[i].generateOutputExt(data,this.childs[i].key);
 		}
 		
-		if(!this.isShadow){
+		if(!this.isShadow ){
 			this.templateO=TemplateUtils.replaceTemplate(this.templateO,data);
-		}
-		if(this.isShadow){
-			console.log('shadow');
 		}
 		for(var i=0;i<this.ctrlObjs.length;i++){
 			this.ctrlObjs[i].generateOutput(data);
@@ -939,6 +971,7 @@ class RepeatCtrl extends CommandCtrl{
 		this.stepRepeat=TemplateUtils.index(source,'$.step-repeat');
 		this.curRepeat=0;
 		this.aliasCommand='Ctrl Repeat';
+		this.name=TemplateUtils.META_VALUE_CTRL_TYPE_REPEAT;
 	}
 	createUI(){
 		super.createUI();
@@ -971,10 +1004,10 @@ class RepeatCtrl extends CommandCtrl{
 		var data={};
 		for(var j=0;j<parent.childsRepeat.length;j++){
 				this.parent.startBuilding();
+				data=this.getData({},this.parent.getData());
 				var extra={};
-				extra[TemplateUtils.META_CTRL_REPEAT_TOTAL]=parent.childsRepeat.length;
 				extra[TemplateUtils.META_CTRL_REPEAT_INDEX]=j;
-				data=this.getData(extra);
+				data=this.getData(extra,data);
 				for(var i=0;i<parent.childsRepeat[j].length;i++){
 					data[parent.childsRepeat[j][i].key]=parent.childsRepeat[j][i].generateOutput();
 				}
@@ -984,15 +1017,10 @@ class RepeatCtrl extends CommandCtrl{
 		parent.templateO=curOutput;
 	}
 
-	getData(dt){
-		var data={};
-		data[TemplateUtils.META_KEY_CTRL]={};
-		data[TemplateUtils.META_KEY_CTRL][TemplateUtils.META_CTRL_TYPE]=TemplateUtils.META_CTRL_TYPE_REPEAT;
-		if(dt!==undefined){
-			for(var key in dt){
-				data[TemplateUtils.META_KEY_CTRL][key]=dt[key];
-			}
-		}
+	getData(dt,inheritData){
+		var data=super.getData(dt,inheritData);
+		var dataMeta=data[TemplateUtils.META];
+		dataMeta[TemplateUtils.META_CTRL_TYPE]=TemplateUtils.META_VALUE_CTRL_TYPE_REPEAT;
 		return data;
 	}
 	
@@ -1000,6 +1028,10 @@ class RepeatCtrl extends CommandCtrl{
 		var output='';
 		var data={};
 		for(var i=1;i<this.parent.bodyRows.length;i++){
+			data=this.getData({},this.parent.getData());
+			var extra={};
+			extra[TemplateUtils.META_CTRL_REPEAT_INDEX]=i;
+			data=this.getData(extra,data);
 			data[this.parent.bodyRows[i].selectedChild.key]=this.parent.bodyRows[i].selectedChild.generateOutput();
 			this.parent.bodyRows[i].selectedChild.generateOutputExt(data,this.parent.bodyRows[i].selectedChild.key);
 			output+=TemplateUtils.replaceTemplate(this.parent.template,data);
@@ -1039,6 +1071,7 @@ class ShadowCtrl extends AutoCtrl{
 	constructor(options){
 		super(options);
 		var source=this.source;
+		this.name=TemplateUtils.META_VALUE_CTRL_TYPE_SHADOW;
 		this.shadowFrom=TemplateUtils.index(source,'$.shadowFrom'); 
 	}
 	createUI(){
