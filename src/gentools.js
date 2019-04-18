@@ -51,7 +51,7 @@ var TemplateUtils={
 		data.SYSTEM_TAB='\t';
 		data.SYSTEM_COMMA='\'';
 		// 1. Compile template function
-		var tempFn = apiDot.template(template);
+		var tempFn = apiDot.template(template,null,data);
 		// 2. Use template function as many times as you like
 		var resultText = tempFn(data);
 		resultText=resultText.replace(new RegExp('SYSTEM_KEEP_TO','g'),'@'); //@
@@ -631,9 +631,23 @@ class BodyMulti extends BodyBase{
 		this.bodyRow.addChild(aChild);
 	}
 
+	getData(dt,inheritData){
+		var data=super.getData(dt,inheritData);
+		var dataMeta=data[TemplateUtils.META];
+		dataMeta[TemplateUtils.META_BODY_CTRL]='';
+		for(var key in this.ctrlObjs){
+			dataMeta[TemplateUtils.META_BODY_CTRL]+=this.ctrlObjs[key].name;
+			dataMeta[TemplateUtils.META_BODY_CTRL]+=',';
+		}
+		if(this.isRepeat){
+			dataMeta[TemplateUtils.META_REPEAT_TOTAL]=this.childsRepeat===undefined? 0 :this.childsRepeat.length;
+		}
+		return data;
+	}
+
 	generateOutput(){
 		var output='';
-		var data={};
+		var data=this.getData();
 		for(var key in this.parent.bodyChilds){
 			var global_child=this.parent.bodyChilds[key];
 			data[global_child.key]=global_child.generateOutput();
@@ -730,7 +744,7 @@ class BodyMultiDrop extends BodyBase{
 
 	generateOutput(){
 		var output='';
-		var data={};
+		var data=this.getData();
 		for(var key in this.parent.bodyChilds){
 			var global_child=this.parent.bodyChilds[key];
 			data[global_child.key]=global_child.generateOutput();
@@ -1001,7 +1015,7 @@ class RepeatCtrl extends CommandCtrl{
 		var curOutput=this.parent.templateO;
 		var parent=this.parent;
 		if (parent.childsRepeat===undefined) return;
-		var data={};
+		var data=this.getData();
 		for(var j=0;j<parent.childsRepeat.length;j++){
 				this.parent.startBuilding();
 				data=this.getData({},this.parent.getData());
@@ -1026,7 +1040,7 @@ class RepeatCtrl extends CommandCtrl{
 	
 	generateOutputMulti(){
 		var output='';
-		var data={};
+		var data=this.getData();
 		for(var i=1;i<this.parent.bodyRows.length;i++){
 			data=this.getData({},this.parent.getData());
 			var extra={};
@@ -1044,7 +1058,7 @@ class RepeatCtrl extends CommandCtrl{
 
 	generateOutputMultiDrop(){
 		var output='';
-		var data={};
+		var data=this.getData();
 		for(var j=1;j<this.parent.bodyRows.length;j++){
 			var bodyRow=this.parent.bodyRows[j];
 			for(var i=0;i<bodyRow.selectedChild.length;i++){
@@ -1083,7 +1097,7 @@ class ShadowCtrl extends AutoCtrl{
 		//todo: shadow default output
 		parent.startBuilding();
 		
-		var data={};
+		var data=this.getData();
 		if (preData!==undefined) data=JSON.parse(JSON.stringify(preData));
 		if(targetShadow instanceof BodyMulti){
 			data[targetShadow.bodyRow.selectedChild.key]=targetShadow.bodyRow.selectedChild.generateOutput();
@@ -1104,7 +1118,7 @@ class ShadowCtrl extends AutoCtrl{
 		if(targetShadow instanceof BodyMulti){
 			for(var j=1;j<targetShadow.bodyRows.length;j++){
 				parent.startBuilding();
-				data={};
+				data=this.getData();
 				if (preData!==undefined) data=JSON.parse(JSON.stringify(preData));
 				var bodyRow=targetShadow.bodyRows[j];
 				data[bodyRow.selectedChild.key]=bodyRow.selectedChild.generateOutput();

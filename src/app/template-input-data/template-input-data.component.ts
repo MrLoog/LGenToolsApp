@@ -31,8 +31,14 @@ export class TemplateInputDataComponent implements OnInit {
     this.GTModel.value = ui.target.value;
   }
 
-  gatherValue(){
-    this.GTModel.value=this.inputValue.nativeElement.value;
+  gatherValue() {
+    const inputObj = this.inputValue.nativeElement;
+// tslint:disable-next-line: triple-equals
+    if(inputObj.type == 'checkbox') {
+      this.GTModel.value = inputObj.checked;
+    } else{
+      this.GTModel.value = inputObj.value;
+    }
   }
 /*
   onKeyDown(event) {

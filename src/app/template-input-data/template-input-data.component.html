@@ -1,9 +1,9 @@
 <div  [attr.data-id]="'tid-pl'+GTModel.parentModel.level+'-ps'+GTModel.parentModel.stt+'-cl'+GTModel.level+'-cs'+GTModel.stt" class="template-input-data">
   <!-- (keydown)="onKeyDown($event)" -->
   <ng-container [ngSwitch]="GTModel.inputType">
-  <input #inputValue *ngSwitchCase="'Boolean'" name="rememberMe" type="checkbox" value="{{GTModel.value}}" />
+  <input #inputValue *ngSwitchCase="'BOOLEAN'" name="rememberMe" type="checkbox" value="{{GTModel.value}}" />
   <input #inputValue #inputValue *ngSwitchCase="'TEXT'" type="text" value="{{GTModel.value}}" />
-  <ng-container *ngSwitchCase="'List'">
+  <ng-container *ngSwitchCase="'LIST'">
       <select #inputValue  value="{{GTModel.value}}">
         <option *ngFor="let value of GTModel.values; let i=index "  [ngValue]="value._">{{value.$.alias}}</option>
       </select>
