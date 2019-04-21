@@ -109,6 +109,15 @@ TemplateUtils.META_CTRL_REPEAT_INDEX='CTRL_REPEAT_INDEX';
 class XMLTemplate{
 	constructor(options){
 		var source=this.source=options.source;
+		for(var key in options.source){
+			if(typeof  options.source[key] !== 'object' ||  options.source[key] instanceof Array){
+				if(options.source[key] instanceof Array && options.source[key].length==1){
+					this[key]=options.source[key][0];
+				}else{
+					this[key]=options.source[key];
+				}
+			}
+		}
 		this.options=options;
 		this.rootFolder=options.rootFolder;
 		this.parent=this.parentModel=options.parent;

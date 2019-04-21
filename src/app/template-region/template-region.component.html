@@ -1,37 +1,54 @@
 <!-- <div style="border-left: 1px solid black;"> -->
-<div [hidden]="GTModel.hidden" [attr.data-cname]="GTModel.constructor.name" [attr.data-pcname]="GTModel.parent.constructor.name" data-id="tr-{{GTModel.parentModel.level}}-{{GTModel.parentModel.stt}}-{{GTModel.level}}-{{GTModel.stt}}" class="template-region">
+<div class="form-group" [hidden]="GTModel.hidden" [attr.data-cname]="GTModel.constructor.name" [attr.data-pcname]="GTModel.parent.constructor.name" data-id="tr-{{GTModel.parentModel.level}}-{{GTModel.parentModel.stt}}-{{GTModel.level}}-{{GTModel.stt}}" class="template-region">
   <!-- <p>Template Region {{GTModel.name}} {{GTModel.constructor.name}}</p> -->
-    <ng-container *ngIf="GTModel.buildable; then someContent"></ng-container>
-    <ng-template #someContent ><input type="button" value="Build {{GTModel.name}}" (click)="buildResult()"/></ng-template>
-    
-    <ng-container *ngIf="GTModel.commandCtrl; then btnCommandCtrl"></ng-container>
-    <ng-template #btnCommandCtrl ><input type="button" value="{{GTModel.aliasCommand}}" (click)="commandCtrl()"/></ng-template>
+  <ng-container *ngIf="GTModel.commandCtrl; then btnCommandCtrl"></ng-container>
+    <ng-template #btnCommandCtrl ><input type="button" class="btn btn-outline-primary" value="{{GTModel.aliasCommand}}" (click)="commandCtrl()"/></ng-template>
     
 
+    <ng-container *ngIf="GTModel.buildable; then someContent"></ng-container>
+    <ng-template #someContent >
+      <input type="button" class="btn btn-outline-primary" value="Build {{GTModel.name}}" (click)="buildResult()"/>
+    </ng-template>
+    
+    
     <ng-container *ngIf="GTModel.isBodyRow && GTModel.stt!=0; then bodyRow"></ng-container>
-    <ng-template #bodyRow ><input type="button" value="Remove Row" (click)="removeRow()"/></ng-template>
+    <ng-template #bodyRow ><input type="button" class="btn btn-outline-primary" value="Remove Row" (click)="removeRow()"/></ng-template>
 
     <ng-container *ngIf="GTModel.bodyRowMulti; then bodyRowMulti"></ng-container>
     <ng-template #bodyRowMulti >
-      <select [(ngModel)]="GTModel.selectedName" (change)="changeMultiBody()">
+      <select [(ngModel)]="GTModel.selectedName" (change)="changeMultiBody()" class="form-control">
         <option *ngFor="let value of GTModel.childs; let i=index "  [ngValue]="value.name">{{value.name}}</option>
       </select>
-      <input *ngIf="GTModel.stt!=0" type="button" value="Remove Row Multi" (click)="removeRow()"/>
+      <input *ngIf="GTModel.stt!=0" class="btn btn-outline-primary" type="button" value="Remove Row Multi" (click)="removeRow()"/>
     </ng-template>
 
     <ng-container *ngIf="GTModel.bodyRowMultiDrop; then bodyRowMultiDrop"></ng-container>
     <ng-template #bodyRowMultiDrop >
         <ngx-select-dropdown (change)="changeMultiBodyDrop($event)"  [multiple]="true" [(ngModel)]="GTModel.selectedChildDisplay" [config]="" [options]="GTModel.displayChilds"></ngx-select-dropdown>
         <input  type="button" value="Test Row Multi Drop" (click)="testRowMultiDrop()"/>
-        <input *ngIf="GTModel.stt!=0" type="button" value="Remove Row Multi Drop" (click)="removeRow()"/>
+        <input *ngIf="GTModel.stt!=0" class="btn btn-outline-primary" type="button" value="Remove Row Multi Drop" (click)="removeRow()"/>
     </ng-template>
 
-    <ng-container *ngIf="GTModel.rootTemplate; then rootTemplate"></ng-container>
-    <ng-template #someContent ><input type="button" value="Build {{GTModel.name}}" (click)="buildResult()"/></ng-template>
-
+    <!-- <ng-container *ngIf="GTModel.rootTemplate; then rootTemplate"></ng-container>
+    <ng-template #rootTemplate ><input type="button" value="Build {{GTModel.name}}" (click)="buildResult()"/>
+      <button class="btn btn-primary" type="button" [attr.data-toggle]="'collapse'" [attr.data-target]="'#'+GTModel.level+GTModel.stt" aria-expanded="false" aria-controls="collapseExample">
+          Hide
+        </button>
+    </ng-template> -->
   <!-- <div style="margin-left:12px;"> -->
-    <div >
-    <ng-template #dynamic></ng-template>
+
+      <ng-container *ngIf="GTModel.buildable; then bodyCard"></ng-container>
+      <ng-template #bodyCard >
+          <button class="btn btn-outline-primary" type="button" [attr.data-toggle]="'collapse'" [attr.data-target]="'#template-region-body-'+GTModel.level+'-'+(GTModel.stt===undefined?'':GTModel.stt)" >
+              Content
+            </button>
+       
+      </ng-template>
+      <div class="{{GTModel.buildable?'collapse show':''}} container-fluid" id="template-region-body-{{GTModel.level}}-{{GTModel.stt}}">
+          <div class="{{GTModel.buildable?'card card-body':''}} row">
+              <ng-template #dynamic ></ng-template>
     </div>
+  </div>
+      
      <ng-template ad-host></ng-template>
 </div>

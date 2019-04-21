@@ -10,8 +10,11 @@ import {
   ComponentFactory,
   OnInit,
   ViewChild,
-  Inject
+  Inject,
+   AfterViewInit,
+    ElementRef
 } from '@angular/core';
+import { DOCUMENT } from '@angular/common';
 
 import {selectFile} from "../gentools";
 import { TemplateRegionComponent } from './template-region/template-region.component';
@@ -36,12 +39,35 @@ export class AppComponent implements OnInit {
   }) viewContainerRef: ViewContainerRef
 
   constructor(
-    @Inject(DynCompServiceService) service){
+    @Inject(DynCompServiceService) service,@Inject(DOCUMENT) private document, private elementRef: ElementRef){
                 this.service=service;
   }
 
 
   ngOnInit() {
+  }
+
+  ngAfterViewInit() {
+    const s = this.document.createElement('script');
+    s.type = 'text/javascript';
+    //s.src = '//external.script.com/script.js';
+    const __this = this; //to store the current instance to call 
+                         //afterScriptAdded function on onload event of 
+                         //script.
+// tslint:disable-next-line: max-line-length
+    s.text = ' window.q$=window.$ = window.jQuery = require("../../../../../../node_modules/jquery/dist/jquery.min.js");require("../../../../../../node_modules/bootstrap/dist/js/bootstrap.js");require("../../../../../../node_modules/bootstrap/js/dist/popover.js");q$("[data-toggle=\'popover\']").popover(); ';
+    s.onload = function () { __this.afterScriptAdded(); };
+    this.elementRef.nativeElement.appendChild(s);
+  }
+
+  afterScriptAdded() {
+    const params= {
+      width: '350px',
+      height: '420px',
+    };
+    if (typeof (window['functionFromExternalScript']) === 'function') {
+      window['functionFromExternalScript'](params);
+    }
   }
 
   onSelectBtnClick():void {
