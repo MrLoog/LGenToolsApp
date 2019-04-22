@@ -1,4 +1,5 @@
 <!-- <div style="border-left: 1px solid black;"> -->
+    <!-- [hidden]="GTModel.hidden" -->
 <div class="form-group" [hidden]="GTModel.hidden" [attr.data-cname]="GTModel.constructor.name" [attr.data-pcname]="GTModel.parent.constructor.name" data-id="tr-{{GTModel.parentModel.level}}-{{GTModel.parentModel.stt}}-{{GTModel.level}}-{{GTModel.stt}}" class="template-region">
   <!-- <p>Template Region {{GTModel.name}} {{GTModel.constructor.name}}</p> -->
   <ng-container *ngIf="GTModel.commandCtrl; then btnCommandCtrl"></ng-container>
@@ -25,7 +26,7 @@
     <ng-container *ngIf="GTModel.bodyRowMultiDrop; then bodyRowMultiDrop"></ng-container>
     <ng-template #bodyRowMultiDrop >
         <ngx-select-dropdown (change)="changeMultiBodyDrop($event)"  [multiple]="true" [(ngModel)]="GTModel.selectedChildDisplay" [config]="" [options]="GTModel.displayChilds"></ngx-select-dropdown>
-        <input  type="button" value="Test Row Multi Drop" (click)="testRowMultiDrop()"/>
+        <!-- <input  type="button" value="Test Row Multi Drop" (click)="testRowMultiDrop()"/> -->
         <input *ngIf="GTModel.stt!=0" class="btn btn-outline-primary" type="button" value="Remove Row Multi Drop" (click)="removeRow()"/>
     </ng-template>
 
@@ -37,15 +38,16 @@
     </ng-template> -->
   <!-- <div style="margin-left:12px;"> -->
 
-      <ng-container *ngIf="GTModel.buildable; then bodyCard"></ng-container>
+      <ng-container *ngIf="GTModel.buildable  || (GTModel.isBodyRow && GTModel.stt!=0) || GTModel.bodyRowMulti || GTModel.bodyRowMultiDrop; then bodyCard"></ng-container>
       <ng-template #bodyCard >
           <button class="btn btn-outline-primary" type="button" [attr.data-toggle]="'collapse'" [attr.data-target]="'#template-region-body-'+GTModel.level+'-'+(GTModel.stt===undefined?'':GTModel.stt)" >
               Content
             </button>
        
       </ng-template>
-      <div class="{{GTModel.buildable?'collapse show':''}} container-fluid" id="template-region-body-{{GTModel.level}}-{{GTModel.stt}}">
+      <div class="{{(GTModel.buildable  || (GTModel.isBodyRow && GTModel.stt!=0) || GTModel.bodyRowMulti || GTModel.bodyRowMultiDrop)?'collapse show':''}} container-fluid" id="template-region-body-{{GTModel.level}}-{{GTModel.stt}}">
           <div class="{{GTModel.buildable?'card card-body':''}} row">
+            
               <ng-template #dynamic ></ng-template>
     </div>
   </div>

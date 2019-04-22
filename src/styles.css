@@ -1,1 +1,9 @@
 /* You can add global styles to this file, and also import other style files */
+.tooltip-inner {
+    text-align: left !important;
+}
+
+.template-region .row>app-template-region{
+    display: inline-block;
+    width:100%;
+}

@@ -1,11 +1,13 @@
-import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef,
+  ChangeDetectionStrategy } from '@angular/core';
 import * as $ from 'jquery';
 import { selectFileExcel } from 'src/gentools';
 
 @Component({
   selector: 'app-template-input-data',
   templateUrl: './template-input-data.component.html',
-  styleUrls: ['./template-input-data.component.css']
+  styleUrls: ['./template-input-data.component.css'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class TemplateInputDataComponent implements OnInit {
   @ViewChild('inputValue') inputValue: ElementRef;

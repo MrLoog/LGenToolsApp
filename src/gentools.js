@@ -677,8 +677,8 @@ class BodyMulti extends BodyBase{
 
 	createUI(){
 		super.createUI();
-		this.bodyRow.createUI();
 		this.generateCtrl();
+		this.bodyRow.createUI();
 		//for(var i=0;i<this.childs.length;i++){
 		//	this.childs[i].createUI();
 		//}
@@ -776,8 +776,8 @@ class BodyMultiDrop extends BodyBase{
 
 	createUI(){
 		super.createUI();
-		this.bodyRow.createUI();
 		this.generateCtrl();
+		this.bodyRow.createUI();
 		//for(var i=0;i<this.childs.length;i++){
 		//	this.childs[i].createUI();
 		//}

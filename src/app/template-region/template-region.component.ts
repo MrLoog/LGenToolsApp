@@ -4,7 +4,8 @@ import { Component,
   ViewContainerRef,
   Inject,
    AfterViewInit,
-    ElementRef
+    ElementRef,
+    ChangeDetectionStrategy
 } from '@angular/core';
 
 import { DOCUMENT } from '@angular/common';
@@ -40,14 +41,13 @@ export class TemplateRegionComponent implements OnInit, AfterViewInit {
   }
 
   ngAfterViewInit() {
-    
     const s = this.document.createElement('script');
     s.type = 'text/javascript';
     //s.src = '//external.script.com/script.js';
     const __this = this; //to store the current instance to call 
                          //afterScriptAdded function on onload event of 
                          //script.
-    s.text = ' q$("[data-toggle=\'popover\']").popover(); ';
+    s.text = ' q$("[data-toggle=\'tooltip\']").tooltip(); ';
     s.onload = function () { __this.afterScriptAdded(); };
     this.elementRef.nativeElement.appendChild(s);
   }

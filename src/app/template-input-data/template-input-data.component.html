@@ -1,23 +1,23 @@
-<div class="form-group" [attr.data-id]="'tid-pl'+GTModel.parentModel.level+'-ps'+GTModel.parentModel.stt+'-cl'+GTModel.level+'-cs'+GTModel.stt" class="template-input-data col-sm-1">
+<div class="form-group" [attr.data-toggle]="'tooltip'" [attr.data-html]="'true'"  [title]="'Description: '+(GTModel.description!==undefined?GTModel.description:GTModel.name)+'</br>Default Value: '+(GTModel.value===undefined?'':GTModel.value)" [attr.data-id]="'tid-pl'+GTModel.parentModel.level+'-ps'+GTModel.parentModel.stt+'-cl'+GTModel.level+'-cs'+GTModel.stt" class="template-input-data col-sm-1">
   <!-- (keydown)="onKeyDown($event)" -->
   <ng-container [ngSwitch]="GTModel.inputType">
   <ng-container *ngSwitchCase="'BOOLEAN'" >
-    <div class="form-control" [attr.data-toggle]="'popover'" [title]="'['+GTModel.name+ '] Description'" [attr.data-html]="'true'"  [attr.data-content]="(GTModel.description!==undefined?'Description: '+GTModel.description+'&lt;/br&gt;':'')+'Default Value: '+GTModel.value">
+    <div class="form-control"   >
       <input #inputValue  class="checkbox" name="rememberMe" type="checkbox" value="{{GTModel.value}}" />
     </div>
     </ng-container>
   
-  <input #inputValue #inputValue *ngSwitchCase="'TEXT'" class="form-control" type="text" value="{{GTModel.value}}" />
+  <input #inputValue #inputValue *ngSwitchCase="'TEXT'" class="form-control" type="text" value="{{GTModel.value}}"  placeholder="{{GTModel.value}}"/>
   <ng-container *ngSwitchCase="'LIST'">
       <select #inputValue  value="{{GTModel.value}}" class="form-control">
         <option *ngFor="let value of GTModel.values; let i=index "  [ngValue]="value._">{{value.$.alias}}</option>
       </select>
     </ng-container>
     <ng-container *ngSwitchCase="'EXCEL'">
-      <input  type="button" class="class="btn btn-outline-primary"" value="Select Excel File" (click)="onSelectExcelBtnClick()"/>
+      <input  type="button" class="btn btn-outline-primary" value="Select Excel File" (click)="onSelectExcelBtnClick()"/>
     </ng-container>
     <ng-container *ngSwitchCase="'DATALIST'">
-      <input  #inputValue value="{{GTModel.value}}" attr.list="{{GTModel.level + 'inp_dropdown'+GTModel.key}}" type="text" >
+      <input  #inputValue value="{{GTModel.value}}" attr.list="{{GTModel.level + 'inp_dropdown'+GTModel.key}}"  class="form-control" type="text" placeholder="{{GTModel.value}}">
       <datalist id="{{GTModel.level + 'inp_dropdown'+GTModel.key}}">
         <option *ngFor="let value of GTModel.values; let i=index "  [ngValue]="value._">{{value.$.alias}}</option>
       </datalist>
