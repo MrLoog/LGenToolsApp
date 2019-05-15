@@ -2,7 +2,8 @@ import {
   ComponentFactoryResolver,
   Injectable,
   Inject,
-  ReflectiveInjector
+  ReflectiveInjector,
+  Renderer2, RendererFactory2
 } from '@angular/core'
 
 import { TemplateRegionComponent } from './template-region/template-region.component'
@@ -15,15 +16,17 @@ import { INTERNAL_BROWSER_DYNAMIC_PLATFORM_PROVIDERS } from '@angular/platform-b
 export class DynCompServiceService {
   factoryResolver:any;
   rootViewContainer:any;
+  private renderer: Renderer2;
 
-  constructor(@Inject(ComponentFactoryResolver) factoryResolver) { 
-    this.factoryResolver = factoryResolver
+  constructor(@Inject(ComponentFactoryResolver) factoryResolver,rendererFactory: RendererFactory2) { 
+    this.factoryResolver = factoryResolver;
+    this.renderer = rendererFactory.createRenderer(null, null);
   }
 
   
 
   setRootViewContainerRef(viewContainerRef) {
-    this.rootViewContainer = viewContainerRef
+    this.rootViewContainer = viewContainerRef;
   }
 
   addDynamicComponent(name,model) {
@@ -54,6 +57,9 @@ export class DynCompServiceService {
     //var parentViewRef=modelParent['UIControl'].instance.viewContainerRef;
     const component = factory
       .create(parentViewRef.parentInjector);
+    if(model.isInputChild){
+      this.renderer.addClass(component.location.nativeElement,model.inputType=='TEXTAREA'?'full-width':'element');
+    }
     component.instance['GTModel']=model;
     model['UIControl']=component;
     parentViewRef.insert(component.hostView);

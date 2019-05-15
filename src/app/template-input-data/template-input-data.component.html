@@ -1,4 +1,5 @@
-<div class="form-group" [attr.data-toggle]="'tooltip'" [attr.data-html]="'true'"  [title]="'Description: '+(GTModel.description!==undefined?GTModel.description:GTModel.name)+'</br>Default Value: '+(GTModel.value===undefined?'':GTModel.value)" [attr.data-id]="'tid-pl'+GTModel.parentModel.level+'-ps'+GTModel.parentModel.stt+'-cl'+GTModel.level+'-cs'+GTModel.stt" class="template-input-data col-sm-1">
+<div class="form-group" [attr.data-toggle]="'tooltip'" [attr.data-html]="'true'"  [title]="'Description: '+(GTModel.description!==undefined?GTModel.description:GTModel.name)+'</br>Default Value: '+(GTModel.value===undefined?'':GTModel.value)" [attr.data-id]="'tid-pl'+GTModel.parentModel.level+'-ps'+GTModel.parentModel.stt+'-cl'+GTModel.level+'-cs'+GTModel.stt" 
+  class="{{'template-input-data ' +(GTModel.inputType=='TEXTAREA'?'col-sm-12':'col-sm-12')}}">
   <!-- (keydown)="onKeyDown($event)" -->
   <ng-container [ngSwitch]="GTModel.inputType">
   <ng-container *ngSwitchCase="'BOOLEAN'" >
@@ -7,7 +8,8 @@
     </div>
     </ng-container>
   
-  <input #inputValue #inputValue *ngSwitchCase="'TEXT'" class="form-control" type="text" value="{{GTModel.value}}"  placeholder="{{GTModel.value}}"/>
+  <input #inputValue  *ngSwitchCase="'TEXT'" class="form-control" type="text" value="{{GTModel.value}}"  placeholder="{{GTModel.value}}"/>
+  <textarea #inputValue *ngSwitchCase="'TEXTAREA'" class="form-control" rows="5" value="{{GTModel.value}}"  placeholder="{{GTModel.value}}"></textarea>
   <ng-container *ngSwitchCase="'LIST'">
       <select #inputValue  value="{{GTModel.value}}" class="form-control">
         <option *ngFor="let value of GTModel.values; let i=index "  [ngValue]="value._">{{value.$.alias}}</option>

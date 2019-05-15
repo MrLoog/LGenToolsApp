@@ -109,6 +109,7 @@ TemplateUtils.META_CTRL_REPEAT_INDEX='CTRL_REPEAT_INDEX';
 class XMLTemplate{
 	constructor(options){
 		var source=this.source=options.source;
+		//tự động sao chép tất cả thuộc tính xml
 		for(var key in options.source){
 			if(typeof  options.source[key] !== 'object' ||  options.source[key] instanceof Array){
 				if(options.source[key] instanceof Array && options.source[key].length==1){
@@ -127,18 +128,6 @@ class XMLTemplate{
 		this.level=this.parent.level+1;
 		this.createdUI=false;
 		this.hidden=false;
-		if(this["init-script"]!==undefined){
-			eval(this["init-script"]);
-		}
-		if(this['parse-script']!==undefined && this.generateOutput!==undefined){
-			var old_generateOutput = this.generateOutput;
-			this.generateOutput=function(){
-				var value=old_generateOutput.apply(this,arguments);
-				var script_execute='function exe(it){'+this['parse-script']+'} exe("'+value.replace(new RegExp('\'','g'),'\\\"').replace(new RegExp('\"','g'),'\\\"')+'");';
-				value=eval(script_execute);
-				return value;
-			}
-		}
 	}
 	setUIControl(uiControl){
 		this.UIControl=uiControl;
@@ -328,9 +317,6 @@ class BodyBase extends XMLTemplate{
 		this.childs.push(aChild);
 	}
 
-	
-	
-
 }
 
 class BodyValue extends BodyBase{
@@ -391,8 +377,6 @@ class BodyValue extends BodyBase{
 			this.startBuilding();
 		}
 		this.templateO=this.templateO.replace(new RegExp(key,'gi'),value);
-		
-		
 		return this.templateO;
 	}
 }
@@ -479,7 +463,6 @@ class BodyPart extends BodyValue{
 	
 	
 	removeBodyRow(bodyRow){
-		console.log('remove normal repeat');
 		var index=bodyRow.repeatIndex*1;
 		this.childsRepeat.splice(index, 1);// not contain first child
 		this.bodyRows.splice(index+1, 1);
@@ -588,7 +571,6 @@ class BodyExcel extends BodyValue{
 	
 	
 	removeBodyRow(bodyRow){
-		console.log('remove normal repeat');
 		var index=bodyRow.repeatIndex*1;
 		this.childsRepeat.splice(index, 1);// not contain first child
 		this.bodyRows.splice(index+1, 1);
@@ -1335,13 +1317,7 @@ class ChildWrapper extends XMLTemplate{
 				var result= this.parseExcelOutput();
 				return result;
 			}else if(this.validInput()){
-				var value=this.getValueInput();
-				/*
-				if(this['parse-script']!==undefined){
-					var script_execute='function exe(it){'+this['parse-script']+'} exe("'+value.replace(new RegExp('\'','g'),'\\\"').replace(new RegExp('\"','g'),'\\\"')+'");';
-					value=eval(script_execute);
-				}*/
-				return value;
+				return this.getValueInput();
 			}
 			return;
 		}else {
