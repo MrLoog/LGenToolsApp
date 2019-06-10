@@ -134,7 +134,7 @@ class XMLTemplate{
 			var old_generateOutput = this.generateOutput;
 			this.generateOutput=function(){
 				var value=old_generateOutput.apply(this,arguments);
-				var script_execute='function exe(it){'+this['parse-script']+'} exe("'+value.replace(new RegExp('\'','g'),'\\\"').replace(new RegExp('\"','g'),'\\\"')+'");';
+				var script_execute='function exe(it){'+this['parse-script']+'} exe("'+value.replace(new RegExp('\\\r','g'),'').replace(new RegExp('\\\n','g'),'').replace(new RegExp('\'','g'),'\\\"').replace(new RegExp('\"','g'),'\\\"')+'");';
 				value=eval(script_execute);
 				return value;
 			}
@@ -188,9 +188,9 @@ class XMLTemplate{
 		}
 	}
 
-	getData(dt,inheritData){
-		var data;
-		data={};
+	getData(dt,inheritData,baseData){
+		var data={};
+		if(baseData!==undefined) data=baseData;
 		data[TemplateUtils.META]={};
 		if(dt!==undefined && dt!=null){
 			for(var key in dt){
@@ -423,8 +423,8 @@ class BodyPart extends BodyValue{
 		}
 	}
 
-	getData(dt,inheritData){
-		var data=super.getData(dt,inheritData);
+	getData(dt,inheritData,baseData){
+		var data=super.getData(dt,inheritData,baseData);
 		var dataMeta=data[TemplateUtils.META];
 		dataMeta[TemplateUtils.META_BODY_CTRL]='';
 		for(var key in this.ctrlObjs){
@@ -652,8 +652,8 @@ class BodyMulti extends BodyBase{
 		this.bodyRow.addChild(aChild);
 	}
 
-	getData(dt,inheritData){
-		var data=super.getData(dt,inheritData);
+	getData(dt,inheritData,baseData){
+		var data=super.getData(dt,inheritData,baseData);
 		var dataMeta=data[TemplateUtils.META];
 		dataMeta[TemplateUtils.META_BODY_CTRL]='';
 		for(var key in this.ctrlObjs){
@@ -1032,17 +1032,17 @@ class RepeatCtrl extends CommandCtrl{
 		}
 	}
 	
-	generateOutput(){
+	generateOutput(preData){
 		var curOutput=this.parent.templateO;
 		var parent=this.parent;
 		if (parent.childsRepeat===undefined) return;
 		var data=this.getData();
 		for(var j=0;j<parent.childsRepeat.length;j++){
 				this.parent.startBuilding();
-				data=this.getData({},this.parent.getData());
+				data=this.getData(data,this.parent.getData(),preData);
 				var extra={};
 				extra[TemplateUtils.META_CTRL_REPEAT_INDEX]=j;
-				data=this.getData(extra,data);
+				data=this.getData(extra,data,preData);
 				for(var i=0;i<parent.childsRepeat[j].length;i++){
 					data[parent.childsRepeat[j][i].key]=parent.childsRepeat[j][i].generateOutput();
 				}
@@ -1052,8 +1052,8 @@ class RepeatCtrl extends CommandCtrl{
 		parent.templateO=curOutput;
 	}
 
-	getData(dt,inheritData){
-		var data=super.getData(dt,inheritData);
+	getData(dt,inheritData,baseData){
+		var data=super.getData(dt,inheritData,baseData);
 		var dataMeta=data[TemplateUtils.META];
 		dataMeta[TemplateUtils.META_CTRL_TYPE]=TemplateUtils.META_VALUE_CTRL_TYPE_REPEAT;
 		return data;
