@@ -39,18 +39,31 @@ var TemplateUtils={
 		$('#textarea-result').text(content);
 	},
 	replaceTemplate(template,data){
+		//template=template.replace(new RegExp('\\}\\}[\\s]*\\{\\{','g'),'\}\}\{\{');
+		template=template.replace(new RegExp('[\\}][\\s]*[\\{]','g'),'\} \{');
+		template=template.replace(new RegExp('[\\>][\\s]*[\\{]','g'),'\> \{');
+		template=template.replace(new RegExp('[\\}][\\n]*','g'),'\}');
+		template=template.replace(new RegExp('[\\n]+[\\{]','g'),'\n\{');
+		//template=template.replace(new RegExp('[\\}][\\s]*[\\<]','g'),'\}\<');
+		//template=template.replace(new RegExp('[\\}][\\s]*[\\{]','g'),'\}\{');
+		//template=template.replace(new RegExp('[\\s]*[\\{][\\s]*','g'),'\{');
+		//template=template.replace(new RegExp('[\\s]*[\\}][\\s]*','g'),'\}');
 		template=template.replace(new RegExp('\n','g'),'{{=it.SYSTEM_NEWLINE}}');
 		//template=template.replace(new RegExp(' ','g'),'{{=it.SYSTEM_SPACE}}');
 		template=template.replace(new RegExp('\t','g'),'{{=it.SYSTEM_TAB}}');
 		//template=template.replace(new RegExp("\\\\'",'g'),'{{=it.SYSTEM_COMMA}}');
 		template=template.replace(new RegExp("\\\\ (?![^{]*})",'g'),'{{=it.SYSTEM_SPACE}}');
 		template=template.replace(new RegExp("\\\\'(?![^{]*})",'g'),'{{=it.SYSTEM_COMMA}}');
+		template=template.replace(new RegExp("\\*(?![^{]*})",'g'),'{{=it.SYSTEM_ASTERISK}}');
+		//template=template.replace(new RegExp("\\\\'(?![^{]*})",'g'),'{{=it.SYSTEM_COMMA}}');
 		template=template.replace(new RegExp('@','g'),'SYSTEM_KEEP_TO'); //@
 		data.SYSTEM_NEWLINE='\n';
 		data.SYSTEM_SPACE=' ';
 		data.SYSTEM_TAB='\t';
 		data.SYSTEM_COMMA='\'';
+		data.SYSTEM_ASTERISK='*';
 		// 1. Compile template function
+		//apiDot.templateSettings.strip=false;
 		var tempFn = apiDot.template(template,null,data);
 		// 2. Use template function as many times as you like
 		var resultText = tempFn(data);
@@ -134,7 +147,18 @@ class XMLTemplate{
 			var old_generateOutput = this.generateOutput;
 			this.generateOutput=function(){
 				var value=old_generateOutput.apply(this,arguments);
-				var script_execute='function exe(it){'+this['parse-script']+'} exe("'+value.replace(new RegExp('\\\r','g'),'').replace(new RegExp('\\\n','g'),'').replace(new RegExp('\'','g'),'\\\"').replace(new RegExp('\"','g'),'\\\"')+'");';
+				var script_execute='function exe(it){'+this['parse-script']+'} exe("'+
+					value
+						.replace(new RegExp('\\/\\*([\\s\\S]*?)\\*\\/','g'),'').replace(new RegExp('\\\r','g'),'') //xóa comment
+						.replace(new RegExp('\\\n','g'),'') //remove xuống dòng
+						.replace(new RegExp('\\\\(?!r|n|t|b|f)','g'),'\\\\')
+						//.replace(new RegExp('\'','g'),'\\\\\'')
+						.replace(new RegExp('\"','g'),'\\\"')+'");';
+						
+						
+						//.replace(new RegExp('\\/\\*.*\\*\\/','g'),'')
+						//.replace(new RegExp('\'','g'),'\\\"')
+						//.replace(new RegExp('\\','g'),'\\\\')
 				value=eval(script_execute);
 				return value;
 			}
