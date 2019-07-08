@@ -40,15 +40,31 @@ var TemplateUtils={
 	},
 	replaceTemplate(template,data){
 		//template=template.replace(new RegExp('\\}\\}[\\s]*\\{\\{','g'),'\}\}\{\{');
-		template=template.replace(new RegExp('[\\}][\\s]*[\\{]','g'),'\} \{');
+		// template=template.replace(new RegExp('(?={{[^}]*)*\\n(?=[^{]*}})','g'),'');
+		var myRegexp = /\{\{([\s\S]+?(\}?)+)\}\}/g;
+		var temp_template=template;
+		var match = myRegexp.exec(temp_template);
+		while (match != null) {
+			// matched text: match[0]
+			// match start: match.index
+			// capturing group n: match[n]
+			template=template.replace(match[0],match[0].replace(new RegExp('\n','g'),''))
+			match = myRegexp.exec(temp_template);
+		}
+
+		// template=template.replace(new RegExp('[\\}][\\s]*(\\{\\{)','g'),'\} \{\{');
+		template=template.replace(new RegExp('[\\}][\\t\\r\\n\\f]*(\\{\\{)','g'),'\}\{\{');
 		template=template.replace(new RegExp('[\\>][\\s]*[\\{]','g'),'\> \{');
-		template=template.replace(new RegExp('[\\}][\\n]*','g'),'\}');
-		template=template.replace(new RegExp('[\\n]+[\\{]','g'),'\n\{');
+		// template=template.replace(new RegExp('[\\}][\\n]*','g'),'\}');
+		template=template.replace(new RegExp('[\\n]+[\\{]','g'),'\{');
 		//template=template.replace(new RegExp('[\\}][\\s]*[\\<]','g'),'\}\<');
 		//template=template.replace(new RegExp('[\\}][\\s]*[\\{]','g'),'\}\{');
 		//template=template.replace(new RegExp('[\\s]*[\\{][\\s]*','g'),'\{');
 		//template=template.replace(new RegExp('[\\s]*[\\}][\\s]*','g'),'\}');
 		template=template.replace(new RegExp('\n','g'),'{{=it.SYSTEM_NEWLINE}}');
+		// template=template.replace(new RegExp('(?=}}[^{]*)*\\n((?=[^}]*{{)|([^}]*$))','g'),'{{=it.SYSTEM_NEWLINE}}');
+		// template=template.replace(new RegExp('^(?=.*}}[^{])*\\n((?=[^}]*{{)|(?=[^{]*({[^{]|$)))','gm'),'{{=it.SYSTEM_NEWLINE}}');
+		// template=template.replace(new RegExp('\\n((?=([^}]*{{))|(?=[^}]*$))','g'),'{{=it.SYSTEM_NEWLINE}}');
 		//template=template.replace(new RegExp(' ','g'),'{{=it.SYSTEM_SPACE}}');
 		template=template.replace(new RegExp('\t','g'),'{{=it.SYSTEM_TAB}}');
 		//template=template.replace(new RegExp("\\\\'",'g'),'{{=it.SYSTEM_COMMA}}');
@@ -65,6 +81,12 @@ var TemplateUtils={
 		// 1. Compile template function
 		//apiDot.templateSettings.strip=false;
 		var tempFn = apiDot.template(template,null,data);
+		var entire = tempFn.toString(); 
+		var body = entire.slice(entire.indexOf("{") + 1, entire.lastIndexOf("}"));
+		body=body.replace(/out\+=' '/g,'out+=\'\'');
+		// body=body.replace(/\+' '/g,'');
+		// body=body.replace(/\+' '\+/g,'');
+		tempFn=new Function('it',body);
 		// 2. Use template function as many times as you like
 		var resultText = tempFn(data);
 		resultText=resultText.replace(new RegExp('SYSTEM_KEEP_TO','g'),'@'); //@

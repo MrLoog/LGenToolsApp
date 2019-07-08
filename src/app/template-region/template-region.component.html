@@ -9,6 +9,16 @@
     <ng-container *ngIf="GTModel.buildable; then someContent"></ng-container>
     <ng-template #someContent >
       <input type="button" class="btn btn-outline-primary" value="Build {{GTModel.name}}" (click)="buildResult()"/>
+      <div class="dropdown">
+        <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+          More
+        </button>
+        <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+          <a class="dropdown-item" href="#">Action</a>
+          <a class="dropdown-item" href="#">Another action</a>
+          <a class="dropdown-item" href="#">Something else here</a>
+        </div>
+      </div>
     </ng-template>
     
     
