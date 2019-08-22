@@ -15,6 +15,7 @@ import {
     ElementRef
 } from '@angular/core';
 import { DOCUMENT } from '@angular/common';
+import { IpcRenderer } from 'electron';
 
 import {selectFile} from "../gentools";
 import { TemplateRegionComponent } from './template-region/template-region.component';
@@ -33,6 +34,7 @@ export class AppComponent implements OnInit {
   arr:any[];
   componentRef: any;
   service:any;
+  private ipc: IpcRenderer;
   
   @ViewChild('dynamic', { 
     read: ViewContainerRef 
@@ -40,7 +42,16 @@ export class AppComponent implements OnInit {
 
   constructor(
     @Inject(DynCompServiceService) service,@Inject(DOCUMENT) private document, private elementRef: ElementRef){
-                this.service=service;
+    this.service=service;
+    if ((<any>window).require) {
+      try {
+        this.ipc = (<any>window).require('electron').ipcRenderer;
+      } catch (e) {
+        throw e;
+      }
+    } else {
+      console.warn('App not running inside Electron!');
+    }
   }
 
 
@@ -71,6 +82,8 @@ export class AppComponent implements OnInit {
   }
 
   onSelectBtnClick():void {
+    //this.ipc.send("openModal");
+    console.log('modal');
     this.arr=[];
     selectFile(this.arr,this);
     var self=this;

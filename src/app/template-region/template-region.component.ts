@@ -10,8 +10,10 @@ import { Component,
 
 import { DOCUMENT } from '@angular/common';
 
-import { AdDirective } from '../ad.directive'
+import { AdDirective } from '../ad.directive';
 import { AreaResultService } from '../area-result.service';
+import { IpcServiceService } from '../ipc-service.service';
+import { IpcRenderer } from 'electron';
 
 @Component({
   selector: 'app-template-region',
@@ -25,6 +27,7 @@ export class TemplateRegionComponent implements OnInit, AfterViewInit {
   items = [{name: 'one', age: 30 },{ name: 'two', age: 27 },{ name: 'three', age: 50 }];
   selectedName='';
   testArr=['1','2','3'];
+  private ipc: IpcRenderer;
 
   txtTest2='test2';
   @ViewChild(AdDirective) adHost: AdDirective;
@@ -34,7 +37,8 @@ export class TemplateRegionComponent implements OnInit, AfterViewInit {
   }) viewContainerRef: ViewContainerRef
 
 
-  constructor(private areaResultService:AreaResultService,@Inject(DOCUMENT) private document, private elementRef: ElementRef){
+  constructor(private areaResultService:AreaResultService,@Inject(DOCUMENT) private document, private elementRef: ElementRef,private _electronService: IpcServiceService){
+    
   }
 
   ngOnInit() {
@@ -64,7 +68,23 @@ export class TemplateRegionComponent implements OnInit, AfterViewInit {
 
   buildResult(){
     console.log('build');
+    this._electronService.send('openModal');
     this.areaResultService.setResult(this.GTModel.generateOutput());
+  }
+
+  showSource(){
+    console.log('show source');
+    //this._electronService.openWindow();
+    this._electronService.openWindowEditTemplate(this.GTModel.absolutePath);
+    //this._electronService.send('openModal');
+    // const remote = require('electron').remote;
+    // const BrowserWindow = remote.BrowserWindow;
+    // const win = new BrowserWindow({
+    //   height: 600,
+    //   width: 800
+    // });
+
+    // win.loadURL('');
   }
 
   commandCtrl(){

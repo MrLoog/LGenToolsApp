@@ -1,9 +1,13 @@
-const { app, BrowserWindow } = require('electron')
+const { app, BrowserWindow , ipcMain} = require('electron')
 const basepath = app.getAppPath();
-const appName=  basepath.substring(basepath.lastIndexOf("\\")+1,basepath.length);
+//const appName=  basepath.substring(basepath.lastIndexOf("\\")+1,basepath.length);
+const appName='LGenToolsApp'
 let win;
 
 function createWindow () {
+  console.log('omg');
+  var temp='D:/ThangTT/Dropbox/Project/LGenToolsApp';
+  //icon: `file://${__dirname}/dist/${appName}/assets/logo.png`
   // Create the browser window.
   win = new BrowserWindow({
     width: 600, 
@@ -11,8 +15,10 @@ function createWindow () {
     backgroundColor: '#ffffff',
     icon: `file://${__dirname}/dist/${appName}/assets/logo.png`
   })
+  win.loadURL(`file://${temp}/dist/${appName}/index.html`);
 
-  win.loadURL(`file://${basepath}/dist/${appName}/index.html`);
+  
+  
 
   //// uncomment below to open the DevTools.
   // win.webContents.openDevTools()
@@ -22,6 +28,19 @@ function createWindow () {
     win = null
   })
 }
+
+function openModal(){
+  const win2 = new BrowserWindow({
+    height: 600,
+    width: 800
+  });
+
+  win2.loadURL('https://www.sitepoint.com');
+}
+
+ipcMain.on('openModal', (event, arg) => {
+  openModal();
+})
 
 // Create window on electron intialization
 app.on('ready', createWindow)

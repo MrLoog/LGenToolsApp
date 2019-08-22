@@ -52,11 +52,13 @@ var TemplateUtils={
 			match = myRegexp.exec(temp_template);
 		}
 
-		// template=template.replace(new RegExp('[\\}][\\s]*(\\{\\{)','g'),'\} \{\{');
-		template=template.replace(new RegExp('[\\}][\\t\\r\\n\\f]*(\\{\\{)','g'),'\}\{\{');
+		template=template.replace(new RegExp('[\\}][\\s]*(\\{\\{)','g'),'\} \{\{');
+		//template=template.replace(new RegExp('[\\}][\\t\\r\\n\\f]*(\\{\\{)','g'),'\} \{\{');
 		template=template.replace(new RegExp('[\\>][\\s]*[\\{]','g'),'\> \{');
 		// template=template.replace(new RegExp('[\\}][\\n]*','g'),'\}');
-		template=template.replace(new RegExp('[\\n]+[\\{]','g'),'\{');
+		template=template.replace(new RegExp('[\s]+{{\?}}','g'),' {{\?}}');
+		template=template.replace(new RegExp('[\s]+{{[\s]*}[\s]*}}','g'),' {{}}}');
+		template=template.replace(new RegExp('[\\n]+[\\{]','g'),'\n\{');
 		//template=template.replace(new RegExp('[\\}][\\s]*[\\<]','g'),'\}\<');
 		//template=template.replace(new RegExp('[\\}][\\s]*[\\{]','g'),'\}\{');
 		//template=template.replace(new RegExp('[\\s]*[\\{][\\s]*','g'),'\{');
@@ -90,6 +92,7 @@ var TemplateUtils={
 		// 2. Use template function as many times as you like
 		var resultText = tempFn(data);
 		resultText=resultText.replace(new RegExp('SYSTEM_KEEP_TO','g'),'@'); //@
+		//resultText=resultText.replace(new RegExp('[\n]+','g'),'\n'); //@
 		return resultText;
 	},
 	stringToFunction(str) {
