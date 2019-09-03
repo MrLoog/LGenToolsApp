@@ -10,7 +10,6 @@ import { Component,
 
 import { DOCUMENT } from '@angular/common';
 
-import { AdDirective } from '../ad.directive';
 import { AreaResultService } from '../area-result.service';
 import { IpcServiceService } from '../ipc-service.service';
 import { IpcRenderer } from 'electron';
@@ -30,7 +29,6 @@ export class TemplateRegionComponent implements OnInit, AfterViewInit {
   private ipc: IpcRenderer;
 
   txtTest2='test2';
-  @ViewChild(AdDirective) adHost: AdDirective;
 
   @ViewChild('dynamic', { 
     read: ViewContainerRef 
@@ -51,7 +49,7 @@ export class TemplateRegionComponent implements OnInit, AfterViewInit {
     const __this = this; //to store the current instance to call 
                          //afterScriptAdded function on onload event of 
                          //script.
-    s.text = ' q$("[data-toggle=\'tooltip\']").tooltip(); ';
+    s.text = ' $(function () {$("[data-toggle=\'tooltip\']").tooltip({container: \'body\'}); });';
     s.onload = function () { __this.afterScriptAdded(); };
     this.elementRef.nativeElement.appendChild(s);
   }

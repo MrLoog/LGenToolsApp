@@ -21,6 +21,7 @@ import {selectFile} from "../gentools";
 import { TemplateRegionComponent } from './template-region/template-region.component';
 import { DynCompServiceService } from './dyn-comp-service.service'
 import { TemplateOutputAreaComponent } from './template-output-area/template-output-area.component';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-root',
@@ -41,7 +42,7 @@ export class AppComponent implements OnInit {
   }) viewContainerRef: ViewContainerRef
 
   constructor(
-    @Inject(DynCompServiceService) service,@Inject(DOCUMENT) private document, private elementRef: ElementRef){
+    @Inject(DynCompServiceService) service,@Inject(DOCUMENT) private document, private elementRef: ElementRef,private router: Router){
     this.service=service;
     if ((<any>window).require) {
       try {
@@ -59,6 +60,8 @@ export class AppComponent implements OnInit {
   }
 
   ngAfterViewInit() {
+    console.log('tsest');
+    console.log(this.router.url);
     const s = this.document.createElement('script');
     s.type = 'text/javascript';
     //s.src = '//external.script.com/script.js';
@@ -66,7 +69,8 @@ export class AppComponent implements OnInit {
                          //afterScriptAdded function on onload event of 
                          //script.
 // tslint:disable-next-line: max-line-length
-    s.text = ' window.q$=window.$ = window.jQuery = require("../../../../../../node_modules/jquery/dist/jquery.min.js");require("../../../../../../node_modules/bootstrap/dist/js/bootstrap.js");require("../../../../../../node_modules/bootstrap/js/dist/popover.js");q$("[data-toggle=\'popover\']").popover(); ';
+//s.text = ' window.q$=window.$ = window.jQuery = require("../../../../../../node_modules/jquery/dist/jquery.min.js");require("../../../../../../node_modules/bootstrap/dist/js/bootstrap.js");require("../../../../../../node_modules/bootstrap/js/dist/popover.js");q$("[data-toggle=\'popover\']").popover(); ';
+//s.text = ' window.q$=window.$ = window.jQuery = require("/node_modules/jquery/dist/jquery.min.js");require("/node_modules/bootstrap/dist/js/bootstrap.js");require("/node_modules/bootstrap/js/dist/popover.js");q$("[data-toggle=\'popover\']").popover(); ';
     s.onload = function () { __this.afterScriptAdded(); };
     this.elementRef.nativeElement.appendChild(s);
   }

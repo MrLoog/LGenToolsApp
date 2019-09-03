@@ -12,12 +12,24 @@
 <body>
    
     
-    <script> var exports = {}; </script>
   <app-root></app-root>
+    <script> var exports = {}; </script>
+    <!-- Insert this line above script imports  -->
+
+<script>if (typeof module === 'object') {window.module = module; module = undefined;}</script>
+
+
+  <script>
+        window.$ = window.jQuery = require('../../../../../../node_modules/jquery/dist/jquery.min.js');
+       // require('../../../../../../node_modules/bootstrap/dist/js/bootstrap.bundle.min.js');
+     // window.q$=window.$ = window.jQuery;
+     //   require('../../../../../../node_modules/bootstrap/js/dist/popover.js');
+    //  q$("[data-toggle=\'popover\']").popover();
+      </script>
+    <!-- Insert this line after script imports -->
+    <!--<script>if (window.module) module = window.module;</script>-->
   <!-- <script>require("../../../../../../node_modules/bootstrap/dist/js/popper.min.js");</script> -->
-  <!-- <script>let $ = require('jquery');</script> -->
-<!-- <script>require('popper.js');</script> -->
-<!-- <script>require('bootstrap');</script> -->
+
   <!-- <script>
     window.$ = window.jQuery = require("../../../../../../node_modules/jquery/dist/jquery.min.js");
     require("../../../../../../node_modules/bootstrap/dist/js/bootstrap.js");
